@@ -1,6 +1,6 @@
 #!/bin/sh
 # Kicode installer script
-# Usage: curl -fsSL https://kicode.kishans.in/install.sh | sh
+# Usage: curl -fsSL https://kicode.kishans.in/install | sh
 
 set -e
 
