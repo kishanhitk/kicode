@@ -35,6 +35,16 @@ impl OpenRouterClient {
         }
     }
 
+    /// Returns the current model identifier
+    pub fn model(&self) -> &str {
+        &self.model
+    }
+
+    /// Sets a new model identifier
+    pub fn set_model(&mut self, model: String) {
+        self.model = model;
+    }
+
     /// Validates an API key by making a request to the OpenRouter models endpoint.
     /// Returns Ok(true) if valid, Ok(false) if invalid, or Err on network errors.
     pub async fn validate_key(api_key: &str) -> Result<bool> {

@@ -1,3 +1,4 @@
+pub mod commands;
 pub mod output;
 
 use crate::api::client::OpenRouterClient;
@@ -57,21 +58,23 @@ impl Repl {
                 continue;
             }
 
-            match line {
-                "/help" => output::print_help(),
-                "/exit" | "/quit" => {
-                    output::print_info("Goodbye!");
-                    break;
+            // Handle "/" alone -> show command menu
+            if line == "/" {
+                if let Some(cmd) = commands::show_command_menu() {
+                    self.execute_command(&cmd);
                 }
-                "/clear" => {
-                    self.conversation.clear();
-                    output::print_info("Conversation cleared.");
-                }
-                _ => {
-                    if let Err(e) = self.process_message(line).await {
-                        output::print_error(&e.to_string());
-                    }
-                }
+                continue;
+            }
+
+            // Handle slash commands
+            if let Some(cmd) = line.strip_prefix('/') {
+                self.execute_command(cmd);
+                continue;
+            }
+
+            // Regular message
+            if let Err(e) = self.process_message(line).await {
+                output::print_error(&e.to_string());
             }
         }
 
@@ -195,5 +198,29 @@ impl Repl {
         .await?;
 
         Ok(response.trim().eq_ignore_ascii_case("y"))
+    }
+
+    /// Execute a slash command by name
+    fn execute_command(&mut self, cmd: &str) {
+        match cmd {
+            "help" => output::print_help(),
+            "exit" | "quit" => {
+                output::print_info("Goodbye!");
+                std::process::exit(0);
+            }
+            "clear" => {
+                self.conversation.clear();
+                output::print_info("Conversation cleared.");
+            }
+            "model" => {
+                if let Err(e) = commands::model::handle(&mut self.client) {
+                    output::print_error(&e.to_string());
+                }
+            }
+            _ => {
+                output::print_error(&format!("Unknown command: /{}", cmd));
+                output::print_info("Type / to see available commands.");
+            }
+        }
     }
 }
