@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
-  <text x="0" y="38" font-family="JetBrains Mono, monospace" font-weight="600" font-size="36" fill="#e6edf3">
-    <tspan fill="#7ee787">&gt;</tspan>kicode<tspan fill="#58a6ff" class="cursor">_</tspan>
-  </text>
-</svg>
