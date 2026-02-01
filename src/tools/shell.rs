@@ -97,7 +97,10 @@ impl Tool for ShellTool {
                     )))
                 }
             }
-            Err(e) => Ok(ToolResult::error(format!("Failed to execute command: {}", e))),
+            Err(e) => Ok(ToolResult::error(format!(
+                "Failed to execute command: {}",
+                e
+            ))),
         }
     }
 }

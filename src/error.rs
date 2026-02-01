@@ -23,6 +23,12 @@ pub enum KicodeError {
     #[error("Command rejected by user")]
     CommandRejected,
 
+    #[error("Setup cancelled by user")]
+    SetupCancelled,
+
+    #[error("Invalid API key")]
+    InvalidApiKey,
+
     #[error("Stream error: {0}")]
     Stream(String),
 

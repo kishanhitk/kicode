@@ -1,10 +1,10 @@
 use crate::error::{KicodeError, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 const DEFAULT_MODEL: &str = "x-ai/grok-code-fast-1";
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SafetyConfig {
     #[serde(default)]
     pub additional_patterns: Vec<String>,
@@ -12,7 +12,7 @@ pub struct SafetyConfig {
     pub skip_confirmation: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FileConfig {
     pub api_key: Option<String>,
     pub model: Option<String>,
@@ -52,7 +52,9 @@ impl Config {
         })
     }
 
-    fn load_file_config() -> Result<FileConfig> {
+    /// Load config from file only (ignores environment variables).
+    /// Useful for setup wizards that need to show/modify file-based config.
+    pub fn load_file_config() -> Result<FileConfig> {
         let config_path = Self::config_path();
 
         if config_path.exists() {
@@ -65,10 +67,27 @@ impl Config {
         }
     }
 
-    fn config_path() -> PathBuf {
+    pub fn config_path() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join("kicode")
             .join("config.toml")
+    }
+
+    pub fn default_model() -> &'static str {
+        DEFAULT_MODEL
+    }
+}
+
+impl FileConfig {
+    pub fn save(&self) -> Result<()> {
+        let path = Config::config_path();
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let content = toml::to_string_pretty(self)
+            .map_err(|e| KicodeError::Config(format!("Failed to serialize config: {}", e)))?;
+        std::fs::write(&path, content)?;
+        Ok(())
     }
 }

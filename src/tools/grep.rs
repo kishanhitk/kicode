@@ -61,13 +61,12 @@ impl Tool for GrepTool {
             Err(e) => return Ok(ToolResult::error(format!("Invalid regex pattern: {}", e))),
         };
 
-        let file_regex = file_pattern.map(|p| {
-            let glob_to_regex = p
-                .replace('.', r"\.")
-                .replace('*', ".*")
-                .replace('?', ".");
-            Regex::new(&format!("{}$", glob_to_regex)).ok()
-        }).flatten();
+        let file_regex = file_pattern
+            .map(|p| {
+                let glob_to_regex = p.replace('.', r"\.").replace('*', ".*").replace('?', ".");
+                Regex::new(&format!("{}$", glob_to_regex)).ok()
+            })
+            .flatten();
 
         let mut results: Vec<String> = Vec::new();
         let mut total_matches = 0;
@@ -181,14 +180,10 @@ fn search_file(path: &str, regex: &Regex, context_lines: usize) -> Option<Vec<St
 
 fn is_likely_binary(filename: &str) -> bool {
     let binary_extensions = [
-        "png", "jpg", "jpeg", "gif", "bmp", "ico", "webp",
-        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-        "zip", "tar", "gz", "bz2", "xz", "7z", "rar",
-        "exe", "dll", "so", "dylib", "a", "o", "obj",
-        "wasm", "class", "pyc", "pyo",
-        "mp3", "mp4", "avi", "mov", "mkv", "wav", "flac",
-        "ttf", "otf", "woff", "woff2", "eot",
-        "sqlite", "db",
+        "png", "jpg", "jpeg", "gif", "bmp", "ico", "webp", "pdf", "doc", "docx", "xls", "xlsx",
+        "ppt", "pptx", "zip", "tar", "gz", "bz2", "xz", "7z", "rar", "exe", "dll", "so", "dylib",
+        "a", "o", "obj", "wasm", "class", "pyc", "pyo", "mp3", "mp4", "avi", "mov", "mkv", "wav",
+        "flac", "ttf", "otf", "woff", "woff2", "eot", "sqlite", "db",
     ];
 
     if let Some(ext) = filename.rsplit('.').next() {
