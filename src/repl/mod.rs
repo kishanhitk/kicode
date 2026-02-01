@@ -3,6 +3,7 @@ pub mod output;
 
 use crate::api::client::OpenRouterClient;
 use crate::api::types::{Message, Role};
+use crate::config::ReleaseChannel;
 use crate::conversation::Conversation;
 use crate::safety::analyzer::SafetyAnalyzer;
 use crate::tools::ToolRegistry;
@@ -246,15 +247,21 @@ pub struct Repl {
     conversation: Conversation,
     tools: ToolRegistry,
     safety: SafetyAnalyzer,
+    release_channel: ReleaseChannel,
 }
 
 impl Repl {
-    pub fn new(client: OpenRouterClient, system_prompt: String) -> Self {
+    pub fn new(
+        client: OpenRouterClient,
+        system_prompt: String,
+        release_channel: ReleaseChannel,
+    ) -> Self {
         Self {
             client,
             conversation: Conversation::new(system_prompt),
             tools: ToolRegistry::new(),
             safety: SafetyAnalyzer::new(),
+            release_channel,
         }
     }
 
@@ -448,6 +455,9 @@ impl Repl {
             }
             "model" => {
                 self.handle_model_command().await;
+            }
+            "update" => {
+                commands::update::check_for_updates(self.release_channel).await;
             }
             _ => {
                 output::print_error(&format!("Unknown command: /{}", cmd));

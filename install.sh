@@ -7,6 +7,7 @@ set -e
 REPO="kishanhitk/kicode"
 BINARY_NAME="kicode"
 INSTALL_DIR="${KICODE_INSTALL_DIR:-$HOME/.local/bin}"
+CHANNEL="${KICODE_CHANNEL:-stable}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,11 +49,37 @@ check_platform() {
     echo "aarch64-apple-darwin"
 }
 
-# Get latest release version from GitHub
-get_latest_version() {
+# Get latest stable release version from GitHub
+get_latest_stable_version() {
     curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
         grep '"tag_name":' |
         sed -E 's/.*"([^"]+)".*/\1/'
+}
+
+# Get latest beta (pre-release) version from GitHub
+get_latest_beta_version() {
+    # Fetch all releases and find the first prerelease
+    curl -fsSL "https://api.github.com/repos/${REPO}/releases" |
+        grep -E '"tag_name"|"prerelease"' |
+        paste - - |
+        grep 'true' |
+        head -1 |
+        sed -E 's/.*"tag_name": *"([^"]+)".*/\1/'
+}
+
+# Get version based on channel
+get_latest_version() {
+    if [ "$CHANNEL" = "beta" ]; then
+        BETA_VERSION=$(get_latest_beta_version)
+        if [ -n "$BETA_VERSION" ]; then
+            echo "$BETA_VERSION"
+        else
+            warn "No beta release found, falling back to stable"
+            get_latest_stable_version
+        fi
+    else
+        get_latest_stable_version
+    fi
 }
 
 main() {
@@ -60,6 +87,10 @@ main() {
     printf "${GREEN}Kicode Installer${NC}\n"
     echo "================"
     echo ""
+
+    if [ "$CHANNEL" = "beta" ]; then
+        info "Using beta release channel"
+    fi
 
     # Check for required commands
     if ! command -v curl >/dev/null 2>&1; then

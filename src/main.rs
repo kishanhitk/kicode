@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
     };
 
     let client = OpenRouterClient::new(&config);
-    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string());
+    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string(), config.release.channel);
 
     repl.run().await
 }

@@ -6,5 +6,6 @@ pub mod repl;
 pub mod safety;
 pub mod setup;
 pub mod tools;
+pub mod update;
 
 pub use error::{KicodeError, Result};
