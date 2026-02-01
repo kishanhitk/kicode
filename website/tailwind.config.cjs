@@ -4,20 +4,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Dark terminal theme colors
-        // Dark terminal theme colors - Minimal & Modern
-        'bg-primary': '#050505', // Deep black
-        'bg-surface': '#0a0a0a', // Slightly lighter black
-        'bg-elevated': '#121212', // For cards/modals
-        'text-primary': '#ffffff', // Pure white
-        'text-secondary': '#a1a1aa', // Zinc-400
-        'text-muted': '#52525b', // Zinc-600
-        'accent-blue': '#3b82f6', // Bright Blue
-        'accent-green': '#22c55e', // Bright Green
-        'accent-warning': '#eab308',
-        'accent-danger': '#ef4444',
-        'border-default': '#27272a', // Zinc-800
-        'border-muted': '#18181b', // Zinc-900
+        // System - capable theme colors
+        'bg-primary': 'var(--bg-primary)', 
+        'bg-surface': 'var(--bg-surface)', 
+        'bg-elevated': 'var(--bg-elevated)', 
+        'text-primary': 'var(--text-primary)', 
+        'text-secondary': 'var(--text-secondary)', 
+        'text-muted': 'var(--text-muted)', 
+        'accent-blue': 'var(--accent-blue)', 
+        'accent-green': 'var(--accent-green)', 
+        'accent-warning': 'var(--accent-warning)',
+        'accent-danger': 'var(--accent-danger)',
+        'border-default': 'var(--border-default)', 
+        'border-muted': 'var(--border-muted)', 
       },
       fontFamily: {
         sans: ['Google Sans', 'Inter', 'system-ui', 'sans-serif'],
