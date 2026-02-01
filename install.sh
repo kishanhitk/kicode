@@ -32,22 +32,20 @@ error() {
     exit 1
 }
 
-# Detect OS
-detect_os() {
-    case "$(uname -s)" in
-        Darwin) echo "apple-darwin" ;;
-        Linux) echo "unknown-linux-gnu" ;;
-        *) error "Unsupported operating system: $(uname -s)" ;;
-    esac
-}
+# Check platform
+check_platform() {
+    OS=$(uname -s)
+    ARCH=$(uname -m)
 
-# Detect architecture
-detect_arch() {
-    case "$(uname -m)" in
-        x86_64|amd64) echo "x86_64" ;;
-        arm64|aarch64) echo "aarch64" ;;
-        *) error "Unsupported architecture: $(uname -m)" ;;
-    esac
+    if [ "$OS" != "Darwin" ]; then
+        error "Currently only macOS is supported. Found: $OS"
+    fi
+
+    if [ "$ARCH" != "arm64" ]; then
+        error "Currently only Apple Silicon (M1/M2/M3) is supported. Found: $ARCH"
+    fi
+
+    echo "aarch64-apple-darwin"
 }
 
 # Get latest release version from GitHub
@@ -72,11 +70,8 @@ main() {
         error "tar is required but not installed"
     fi
 
-    # Detect platform
-    OS=$(detect_os)
-    ARCH=$(detect_arch)
-    TARGET="${ARCH}-${OS}"
-
+    # Check platform
+    TARGET=$(check_platform)
     info "Detected platform: ${TARGET}"
 
     # Get version
@@ -98,7 +93,7 @@ main() {
     # Download
     info "Downloading from ${DOWNLOAD_URL}"
     if ! curl -fsSL "$DOWNLOAD_URL" -o "${TMP_DIR}/${ARCHIVE_NAME}"; then
-        error "Failed to download ${ARCHIVE_NAME}. Please check if the release exists for your platform."
+        error "Failed to download ${ARCHIVE_NAME}. Please check if the release exists."
     fi
 
     # Extract
@@ -125,13 +120,10 @@ main() {
             echo ""
             echo "Add it to your shell configuration:"
             echo ""
-            echo "  For bash (~/.bashrc):"
-            echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
-            echo ""
             echo "  For zsh (~/.zshrc):"
             echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
             echo ""
-            echo "Then restart your shell or run: source ~/.bashrc (or ~/.zshrc)"
+            echo "Then restart your shell or run: source ~/.zshrc"
             ;;
     esac
 
