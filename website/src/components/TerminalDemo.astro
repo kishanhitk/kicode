@@ -299,8 +299,9 @@
         inputLine.style.opacity = '1';
         
         // Focus input after a small delay to ensure visibility
+        // Use preventScroll to avoid scrolling the whole page on mobile
         setTimeout(() => {
-            input.focus();
+            input.focus({ preventScroll: true });
         }, 100);
 
         // Handle input
@@ -357,7 +358,7 @@
         // Focus input when clicking anywhere in terminal
         document.getElementById('terminal-demo').addEventListener('click', (e) => {
             if (e.target.tagName !== 'INPUT') {
-                input.focus();
+                input.focus({ preventScroll: true });
             }
         });
     }
