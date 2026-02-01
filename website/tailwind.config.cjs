@@ -5,22 +5,23 @@ module.exports = {
     extend: {
       colors: {
         // Dark terminal theme colors
-        'bg-primary': '#0d1117',
-        'bg-surface': '#161b22',
-        'bg-elevated': '#21262d',
-        'text-primary': '#e6edf3',
-        'text-secondary': '#8b949e',
-        'text-muted': '#6e7681',
-        'accent-blue': '#58a6ff',
-        'accent-green': '#7ee787',
-        'accent-warning': '#d29922',
-        'accent-danger': '#f85149',
-        'border-default': '#30363d',
-        'border-muted': '#21262d',
+        // Dark terminal theme colors - Minimal & Modern
+        'bg-primary': '#050505', // Deep black
+        'bg-surface': '#0a0a0a', // Slightly lighter black
+        'bg-elevated': '#121212', // For cards/modals
+        'text-primary': '#ffffff', // Pure white
+        'text-secondary': '#a1a1aa', // Zinc-400
+        'text-muted': '#52525b', // Zinc-600
+        'accent-blue': '#3b82f6', // Bright Blue
+        'accent-green': '#22c55e', // Bright Green
+        'accent-warning': '#eab308',
+        'accent-danger': '#ef4444',
+        'border-default': '#27272a', // Zinc-800
+        'border-muted': '#18181b', // Zinc-900
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        sans: ['Google Sans', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['Space Mono', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       animation: {
         'typing': 'typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite',

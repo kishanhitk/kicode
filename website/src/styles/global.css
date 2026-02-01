@@ -17,8 +17,8 @@
   --sl-color-gray-7: #21262d;
   --sl-color-black: #0d1117;
 
-  --sl-font-system: 'Inter', system-ui, -apple-system, sans-serif;
-  --sl-font-system-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sl-font-system: 'Google Sans', system-ui, -apple-system, sans-serif;
+  --sl-font-system-mono: 'Space Mono', ui-monospace, monospace;
 
   /* Override background */
   --sl-color-bg: var(--sl-color-black);
@@ -29,8 +29,8 @@
 
 /* Code blocks styling */
 .expressive-code {
-  --ec-codeBg: #161b22;
-  --ec-codeFontFamily: 'JetBrains Mono', monospace;
+  --ec-codeBg: #121212;
+  --ec-codeFontFamily: 'Space Mono', monospace;
   --ec-codePadBlock: 1rem;
   --ec-codePadInline: 1.25rem;
   --ec-brdRad: 0.5rem;
@@ -39,7 +39,7 @@
 /* Terminal prompt styling */
 .terminal-prompt::before {
   content: '❯ ';
-  color: #7ee787;
+  color: #22c55e;
 }
 
 /* Custom scrollbar for dark theme */
@@ -49,11 +49,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #161b22;
+  background: #0a0a0a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30363d;
+  background: #27272a;
   border-radius: 4px;
 }
 
