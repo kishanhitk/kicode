@@ -11,7 +11,11 @@ use colored::Colorize;
 use crossterm::cursor;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::terminal::{self, Clear, ClearType};
+use regex::Regex;
+use std::collections::HashSet;
+use std::fs;
 use std::io::{self, BufRead, Write};
+use std::path::PathBuf;
 
 /// Result of reading user input
 enum InputResult {
@@ -95,6 +99,84 @@ fn clear_command_suggestions(num_lines: usize) -> io::Result<()> {
     io::stdout().flush()?;
 
     Ok(())
+}
+
+fn extract_file_mentions(input: &str) -> Vec<String> {
+    let pattern = Regex::new(r"(^|[^\w])@([^\s]+)").unwrap();
+    pattern
+        .captures_iter(input)
+        .filter_map(|cap| cap.get(2))
+        .map(|m| {
+            m.as_str().trim_end_matches(|c: char| {
+                matches!(
+                    c,
+                    '.' | ',' | ';' | ':' | '!' | '?' | ')' | ']' | '}' | '>' | '"' | '\''
+                )
+            })
+        })
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
+}
+
+fn resolve_mention_path(path: &str) -> PathBuf {
+    if let Some(rest) = path.strip_prefix("~/") {
+        if let Some(home) = dirs::home_dir() {
+            return home.join(rest);
+        }
+    }
+    PathBuf::from(path)
+}
+
+fn format_file_with_line_numbers(content: &str) -> String {
+    if content.is_empty() {
+        return "(empty file)".to_string();
+    }
+    content
+        .lines()
+        .enumerate()
+        .map(|(i, line)| format!("{:4} | {}", i + 1, line))
+        .collect::<Vec<String>>()
+        .join("\n")
+}
+
+fn expand_file_mentions(input: &str) -> (String, Vec<String>) {
+    let mentions = extract_file_mentions(input);
+    if mentions.is_empty() {
+        return (input.to_string(), Vec::new());
+    }
+
+    let mut seen = HashSet::new();
+    let mut sections = Vec::new();
+    let mut warnings = Vec::new();
+
+    for mention in mentions {
+        let resolved = resolve_mention_path(&mention);
+        let key = resolved.to_string_lossy().to_string();
+        if !seen.insert(key) {
+            continue;
+        }
+        if resolved.is_dir() {
+            warnings.push(format!("Skipped directory mention: {}", mention));
+            continue;
+        }
+        match fs::read_to_string(&resolved) {
+            Ok(content) => {
+                let formatted = format_file_with_line_numbers(&content);
+                sections.push(format!("File: {}\n{}", mention, formatted));
+            }
+            Err(e) => warnings.push(format!("Failed to read {}: {}", mention, e)),
+        }
+    }
+
+    if sections.is_empty() {
+        return (input.to_string(), warnings);
+    }
+
+    let mut expanded = input.to_string();
+    expanded.push_str("\n\nReferenced files:\n");
+    expanded.push_str(&sections.join("\n\n"));
+    (expanded, warnings)
 }
 
 /// Read user input character by character with inline command filtering.
@@ -315,9 +397,14 @@ impl Repl {
     }
 
     async fn process_message(&mut self, user_input: &str) -> Result<()> {
+        let (expanded_input, warnings) = expand_file_mentions(user_input);
+        for warning in warnings {
+            output::print_warning(&warning);
+        }
+
         self.conversation.add_message(Message {
             role: Role::User,
-            content: Some(user_input.to_string()),
+            content: Some(expanded_input),
             tool_calls: None,
             tool_call_id: None,
         });
