@@ -119,7 +119,7 @@ fn read_input() -> io::Result<InputResult> {
                         if buffer.starts_with('/') {
                             clear_command_suggestions(prev_match_count)?;
                         }
-                        println!();
+                        print!("\r\n");
                         break InputResult::Exit;
                     }
 
@@ -142,15 +142,15 @@ fn read_input() -> io::Result<InputResult> {
                                 print!("{}", full_cmd);
                                 io::stdout().flush()?;
 
-                                println!();
+                                print!("\r\n");
                                 break InputResult::Command(name.to_string());
                             } else {
                                 // No matches - send as regular input to AI
-                                println!();
+                                print!("\r\n");
                                 break InputResult::Line(buffer);
                             }
                         } else {
-                            println!();
+                            print!("\r\n");
                             break InputResult::Line(buffer);
                         }
                     }
