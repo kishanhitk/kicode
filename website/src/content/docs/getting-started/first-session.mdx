@@ -184,9 +184,38 @@ Or press `Ctrl+C`.
 
 </Steps>
 
+## Slash Commands
+
+kicode provides built-in slash commands for quick actions. Type `/` to see an interactive menu:
+
+```
+>> /
+  ▸ /model - Change AI model
+    /clear - Clear conversation history
+    /help - Show help
+    /exit - Exit the program
+```
+
+Use **arrow keys** to navigate and **Enter** to select. You can also type to filter commands.
+
+| Command | Description |
+|---------|-------------|
+| `/model` | Change AI model with interactive selection |
+| `/clear` | Clear conversation history |
+| `/help` | Show available commands |
+| `/exit` | Exit kicode |
+
 ## Switching Models
 
-Use a different AI model mid-session or when starting:
+Change models anytime using the `/model` command:
+
+```
+>> /model
+```
+
+This opens an interactive selection menu. Use arrow keys to navigate, type to filter, and Enter to select.
+
+You can also specify a model when starting kicode:
 
 ```bash
 # Start with a specific model

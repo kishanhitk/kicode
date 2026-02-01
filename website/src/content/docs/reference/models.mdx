@@ -139,18 +139,29 @@ General guidance:
 
 ## Switching Models Mid-Session
 
-You cannot switch models during a session. To use a different model:
+Use the `/model` command to switch models without restarting:
 
-1. Exit the current session
-2. Start a new session with the desired model
-
-```bash
-# Exit current session
-you: exit
-
-# Start with new model
-kicode --model anthropic/claude-3-opus
 ```
+>> /model
+```
+
+This opens an interactive menu with arrow-key navigation:
+
+```
+Select a model (↑/↓ to navigate, type to filter):
+
+  ▸ Claude 3.5 Sonnet (anthropic/claude-3.5-sonnet)
+    GPT-4 Turbo (openai/gpt-4-turbo)
+    Grok Code Fast (x-ai/grok-code-fast-1)
+    ...
+```
+
+- **Arrow keys**: Navigate the list
+- **Type**: Filter models by name
+- **Enter**: Select the highlighted model
+- **Esc**: Cancel selection
+
+The selected model is automatically saved to your config file for future sessions.
 
 ## Troubleshooting
 
