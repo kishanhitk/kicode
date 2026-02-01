@@ -11,7 +11,13 @@ use colored::Colorize;
 use crossterm::cursor;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::terminal::{self, Clear, ClearType};
+use regex::Regex;
+use std::collections::HashSet;
+use std::fs;
 use std::io::{self, BufRead, Write};
+use std::path::PathBuf;
+use std::sync::OnceLock;
+use walkdir::WalkDir;
 
 /// Result of reading user input
 enum InputResult {
@@ -97,12 +103,236 @@ fn clear_command_suggestions(num_lines: usize) -> io::Result<()> {
     Ok(())
 }
 
+struct FileIndex {
+    files: Vec<String>,
+    files_lower: Vec<String>,
+}
+
+fn find_repo_root() -> PathBuf {
+    let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let fallback = dir.clone();
+    loop {
+        if dir.join(".git").exists() {
+            return dir;
+        }
+        if !dir.pop() {
+            return fallback;
+        }
+    }
+}
+
+fn is_excluded_dir(name: &str) -> bool {
+    matches!(
+        name,
+        ".git"
+            | "node_modules"
+            | "target"
+            | "dist"
+            | "build"
+            | "out"
+            | ".next"
+            | ".cache"
+            | "vendor"
+    )
+}
+
+fn build_file_index() -> FileIndex {
+    let root = find_repo_root();
+    let mut files = Vec::new();
+
+    let walker = WalkDir::new(&root)
+        .follow_links(false)
+        .into_iter()
+        .filter_entry(|entry| {
+            if entry.file_type().is_dir() {
+                let name = entry.file_name().to_string_lossy();
+                !is_excluded_dir(&name)
+            } else {
+                true
+            }
+        });
+
+    for entry in walker.filter_map(|entry| entry.ok()) {
+        if entry.file_type().is_file() {
+            if let Ok(rel) = entry.path().strip_prefix(&root) {
+                files.push(rel.to_string_lossy().replace('\\', "/"));
+            }
+        }
+    }
+
+    files.sort();
+    let files_lower = files.iter().map(|p| p.to_ascii_lowercase()).collect();
+    FileIndex { files, files_lower }
+}
+
+fn get_file_index() -> &'static FileIndex {
+    static INDEX: OnceLock<FileIndex> = OnceLock::new();
+    INDEX.get_or_init(build_file_index)
+}
+
+fn get_matching_files(query: &str, limit: usize) -> Vec<String> {
+    let index = get_file_index();
+    if limit == 0 {
+        return Vec::new();
+    }
+    if query.is_empty() {
+        return index.files.iter().take(limit).cloned().collect();
+    }
+    let needle = query.to_ascii_lowercase();
+    index
+        .files
+        .iter()
+        .zip(index.files_lower.iter())
+        .filter(|(_, lower)| lower.contains(&needle))
+        .take(limit)
+        .map(|(path, _)| path.clone())
+        .collect()
+}
+
+fn active_mention_query(buffer: &str) -> Option<String> {
+    let at_pos = buffer.rfind('@')?;
+    if at_pos > 0 {
+        if let Some(prev) = buffer[..at_pos].chars().rev().next() {
+            if prev.is_ascii_alphanumeric() || prev == '_' {
+                return None;
+            }
+        }
+    }
+    let after = &buffer[at_pos + 1..];
+    if after.chars().any(|c| c.is_whitespace()) {
+        return None;
+    }
+    Some(after.to_string())
+}
+
+fn render_file_suggestions(matches: &[String]) -> io::Result<()> {
+    if matches.is_empty() {
+        return Ok(());
+    }
+
+    crossterm::execute!(io::stdout(), cursor::SavePosition)?;
+
+    for path in matches {
+        crossterm::execute!(
+            io::stdout(),
+            cursor::MoveToNextLine(1),
+            Clear(ClearType::CurrentLine)
+        )?;
+        print!("  @{}", path.cyan());
+    }
+
+    crossterm::execute!(io::stdout(), cursor::RestorePosition)?;
+    io::stdout().flush()?;
+
+    Ok(())
+}
+
+fn update_file_suggestions(buffer: &str, prev_count: &mut usize) -> io::Result<()> {
+    if let Some(query) = active_mention_query(buffer) {
+        let matches = get_matching_files(&query, 5);
+        if *prev_count > 0 {
+            clear_command_suggestions(*prev_count)?;
+        }
+        if !matches.is_empty() {
+            render_file_suggestions(&matches)?;
+        }
+        *prev_count = matches.len();
+    } else if *prev_count > 0 {
+        clear_command_suggestions(*prev_count)?;
+        *prev_count = 0;
+    }
+    Ok(())
+}
+
+fn extract_file_mentions(input: &str) -> Vec<String> {
+    let pattern = Regex::new(r"(^|[^\w])@([^\s]+)").unwrap();
+    pattern
+        .captures_iter(input)
+        .filter_map(|cap| cap.get(2))
+        .map(|m| {
+            m.as_str().trim_end_matches(|c: char| {
+                matches!(
+                    c,
+                    '.' | ',' | ';' | ':' | '!' | '?' | ')' | ']' | '}' | '>' | '"' | '\''
+                )
+            })
+        })
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
+}
+
+fn resolve_mention_path(path: &str) -> PathBuf {
+    if let Some(rest) = path.strip_prefix("~/") {
+        if let Some(home) = dirs::home_dir() {
+            return home.join(rest);
+        }
+    }
+    let candidate = PathBuf::from(path);
+    if candidate.is_absolute() || candidate.exists() {
+        return candidate;
+    }
+    find_repo_root().join(path)
+}
+
+fn format_file_with_line_numbers(content: &str) -> String {
+    if content.is_empty() {
+        return "(empty file)".to_string();
+    }
+    content
+        .lines()
+        .enumerate()
+        .map(|(i, line)| format!("{:4} | {}", i + 1, line))
+        .collect::<Vec<String>>()
+        .join("\n")
+}
+
+fn expand_file_mentions(input: &str) -> (String, Vec<String>) {
+    let mentions = extract_file_mentions(input);
+    if mentions.is_empty() {
+        return (input.to_string(), Vec::new());
+    }
+
+    let mut seen = HashSet::new();
+    let mut sections = Vec::new();
+    let mut warnings = Vec::new();
+
+    for mention in mentions {
+        let resolved = resolve_mention_path(&mention);
+        let key = resolved.to_string_lossy().to_string();
+        if !seen.insert(key) {
+            continue;
+        }
+        if resolved.is_dir() {
+            warnings.push(format!("Skipped directory mention: {}", mention));
+            continue;
+        }
+        match fs::read_to_string(&resolved) {
+            Ok(content) => {
+                let formatted = format_file_with_line_numbers(&content);
+                sections.push(format!("File: {}\n{}", mention, formatted));
+            }
+            Err(e) => warnings.push(format!("Failed to read {}: {}", mention, e)),
+        }
+    }
+
+    if sections.is_empty() {
+        return (input.to_string(), warnings);
+    }
+
+    let mut expanded = input.to_string();
+    expanded.push_str("\n\nReferenced files:\n");
+    expanded.push_str(&sections.join("\n\n"));
+    (expanded, warnings)
+}
+
 /// Read user input character by character with inline command filtering.
 /// When input starts with '/', shows filtered command suggestions below the input.
 fn read_input() -> io::Result<InputResult> {
     let mut buffer = String::new();
     let mut selected_idx: usize = 0;
     let mut prev_match_count: usize = 0; // Track how many lines were rendered
+    let mut prev_file_match_count: usize = 0;
 
     terminal::enable_raw_mode()?;
 
@@ -118,6 +348,10 @@ fn read_input() -> io::Result<InputResult> {
                     | (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
                         if buffer.starts_with('/') {
                             clear_command_suggestions(prev_match_count)?;
+                        }
+                        if prev_file_match_count > 0 {
+                            clear_command_suggestions(prev_file_match_count)?;
+                            prev_file_match_count = 0;
                         }
                         print!("\r\n");
                         break InputResult::Exit;
@@ -150,6 +384,10 @@ fn read_input() -> io::Result<InputResult> {
                                 break InputResult::Line(buffer);
                             }
                         } else {
+                            if prev_file_match_count > 0 {
+                                clear_command_suggestions(prev_file_match_count)?;
+                                prev_file_match_count = 0;
+                            }
                             print!("\r\n");
                             break InputResult::Line(buffer);
                         }
@@ -185,11 +423,17 @@ fn read_input() -> io::Result<InputResult> {
 
                         // If in command mode, reset selection and re-render
                         if buffer.starts_with('/') {
+                            if prev_file_match_count > 0 {
+                                clear_command_suggestions(prev_file_match_count)?;
+                                prev_file_match_count = 0;
+                            }
                             selected_idx = 0; // Reset to first match
                             clear_command_suggestions(prev_match_count)?;
                             let matches = get_matching_commands(&buffer);
                             prev_match_count = matches.len();
                             render_command_suggestions(&buffer, selected_idx)?;
+                        } else {
+                            update_file_suggestions(&buffer, &mut prev_file_match_count)?;
                         }
                     }
 
@@ -213,6 +457,9 @@ fn read_input() -> io::Result<InputResult> {
                                 clear_command_suggestions(prev_match_count)?;
                                 prev_match_count = 0;
                             }
+                            if !buffer.starts_with('/') {
+                                update_file_suggestions(&buffer, &mut prev_file_match_count)?;
+                            }
                         }
                     }
 
@@ -221,6 +468,10 @@ fn read_input() -> io::Result<InputResult> {
                         if buffer.starts_with('/') {
                             clear_command_suggestions(prev_match_count)?;
                             prev_match_count = 0;
+                        }
+                        if prev_file_match_count > 0 {
+                            clear_command_suggestions(prev_file_match_count)?;
+                            prev_file_match_count = 0;
                         }
                         // Clear the current line
                         for _ in 0..buffer.len() {
@@ -315,9 +566,14 @@ impl Repl {
     }
 
     async fn process_message(&mut self, user_input: &str) -> Result<()> {
+        let (expanded_input, warnings) = expand_file_mentions(user_input);
+        for warning in warnings {
+            output::print_warning(&warning);
+        }
+
         self.conversation.add_message(Message {
             role: Role::User,
-            content: Some(user_input.to_string()),
+            content: Some(expanded_input),
             tool_calls: None,
             tool_call_id: None,
         });
