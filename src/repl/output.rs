@@ -11,7 +11,12 @@ pub fn print_streaming(text: &str) {
 }
 
 pub fn print_tool_call(name: &str, args: &str) {
-    println!("{} {} {}", "Tool:".yellow().bold(), name.yellow(), args.dimmed());
+    println!(
+        "{} {} {}",
+        "Tool:".yellow().bold(),
+        name.yellow(),
+        args.dimmed()
+    );
 }
 
 pub fn print_tool_result(result: &str) {

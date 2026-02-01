@@ -1,4 +1,4 @@
-use crate::api::streaming::{parse_sse_line, StreamAccumulator};
+use crate::api::streaming::{StreamAccumulator, parse_sse_line};
 use crate::api::types::{ChatRequest, ChatResponse, Message, ProviderPreferences, ToolSchema};
 use crate::config::Config;
 use crate::error::{KicodeError, Result};
@@ -6,6 +6,7 @@ use futures::StreamExt;
 use reqwest::Client;
 
 const API_URL: &str = "https://openrouter.ai/api/v1/chat/completions";
+const MODELS_URL: &str = "https://openrouter.ai/api/v1/models";
 
 fn debug_enabled() -> bool {
     std::env::var("KICODE_DEBUG").is_ok()
@@ -34,6 +35,19 @@ impl OpenRouterClient {
         }
     }
 
+    /// Validates an API key by making a request to the OpenRouter models endpoint.
+    /// Returns Ok(true) if valid, Ok(false) if invalid, or Err on network errors.
+    pub async fn validate_key(api_key: &str) -> Result<bool> {
+        let client = Client::new();
+        let response = client
+            .get(MODELS_URL)
+            .header("Authorization", format!("Bearer {}", api_key))
+            .send()
+            .await?;
+
+        Ok(response.status().is_success())
+    }
+
     pub async fn chat_stream<F>(
         &self,
         messages: Vec<Message>,
@@ -60,11 +74,14 @@ impl OpenRouterClient {
 
         debug_log!("Sending request with {} messages", messages.len());
         for (i, msg) in messages.iter().enumerate() {
-            debug_log!("  [{}] role={:?}, content_len={:?}, tool_calls={:?}, tool_call_id={:?}",
-                i, msg.role,
+            debug_log!(
+                "  [{}] role={:?}, content_len={:?}, tool_calls={:?}, tool_call_id={:?}",
+                i,
+                msg.role,
                 msg.content.as_ref().map(|s| s.len()),
                 msg.tool_calls.as_ref().map(|t| t.len()),
-                msg.tool_call_id);
+                msg.tool_call_id
+            );
         }
 
         if debug_enabled() {
@@ -112,8 +129,14 @@ impl OpenRouterClient {
                 buffer = buffer[newline_pos + 1..].to_string();
 
                 if let Some(data) = parse_sse_line(&line) {
-                    if debug_enabled() && data.contains("\"content\":\"") && !data.contains("\"content\":\"\"") {
-                        eprintln!("[DEBUG] Raw SSE with content: {}", &data[..data.len().min(500)]);
+                    if debug_enabled()
+                        && data.contains("\"content\":\"")
+                        && !data.contains("\"content\":\"\"")
+                    {
+                        eprintln!(
+                            "[DEBUG] Raw SSE with content: {}",
+                            &data[..data.len().min(500)]
+                        );
                     }
                     match serde_json::from_str::<ChatResponse>(&data) {
                         Ok(response) => {
@@ -123,9 +146,11 @@ impl OpenRouterClient {
                                 }
                                 if let Some(ref delta) = choice.delta {
                                     if delta.content.is_some() || delta.tool_calls.is_some() {
-                                        debug_log!("Delta: content={:?}, tool_calls={:?}",
+                                        debug_log!(
+                                            "Delta: content={:?}, tool_calls={:?}",
                                             delta.content.as_ref().map(|s| s.len()),
-                                            delta.tool_calls.as_ref().map(|t| t.len()));
+                                            delta.tool_calls.as_ref().map(|t| t.len())
+                                        );
                                     }
                                     if let Some(content) = accumulator.accumulate(delta) {
                                         on_chunk(content);
@@ -136,7 +161,11 @@ impl OpenRouterClient {
                         Err(e) => {
                             // Only warn on actual parse errors, not [DONE] markers
                             if !data.contains("[DONE]") && !data.trim().is_empty() {
-                                eprintln!("Parse warning: {} for data: {}", e, &data[..data.len().min(100)]);
+                                eprintln!(
+                                    "Parse warning: {} for data: {}",
+                                    e,
+                                    &data[..data.len().min(100)]
+                                );
                             }
                         }
                     }

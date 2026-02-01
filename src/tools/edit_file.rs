@@ -1,6 +1,6 @@
 use super::{Tool, ToolResult};
 use async_trait::async_trait;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::fs;
 
 pub struct EditFileTool;
@@ -57,7 +57,7 @@ impl Tool for EditFileTool {
 
         match matches.len() {
             0 => Ok(ToolResult::error(
-                "Text not found in file. Make sure old_text matches exactly, including whitespace and newlines."
+                "Text not found in file. Make sure old_text matches exactly, including whitespace and newlines.",
             )),
             1 => {
                 let new_content = content.replacen(old_text, new_text, 1);

@@ -1,6 +1,6 @@
 use super::{Tool, ToolResult};
 use async_trait::async_trait;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::process::Command;
 
 pub struct ShellTool;
@@ -97,7 +97,10 @@ impl Tool for ShellTool {
                     )))
                 }
             }
-            Err(e) => Ok(ToolResult::error(format!("Failed to execute command: {}", e))),
+            Err(e) => Ok(ToolResult::error(format!(
+                "Failed to execute command: {}",
+                e
+            ))),
         }
     }
 }

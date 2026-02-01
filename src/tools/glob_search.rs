@@ -1,7 +1,7 @@
 use super::{Tool, ToolResult};
 use async_trait::async_trait;
 use glob::glob;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::path::PathBuf;
 
 pub struct GlobSearchTool;
@@ -47,9 +47,7 @@ impl Tool for GlobSearchTool {
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("."));
 
-        let max_results = args["max_results"]
-            .as_i64()
-            .unwrap_or(100) as usize;
+        let max_results = args["max_results"].as_i64().unwrap_or(100) as usize;
 
         let full_pattern = base_path.join(pattern);
         let pattern_str = full_pattern.to_string_lossy();

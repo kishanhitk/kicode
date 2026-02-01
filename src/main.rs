@@ -1,16 +1,27 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use kicode::api::client::OpenRouterClient;
 use kicode::config::Config;
+use kicode::error::KicodeError;
 use kicode::repl::Repl;
+use kicode::setup::{run_first_run_setup, run_setup_command};
 
 #[derive(Parser)]
 #[command(name = "kicode")]
 #[command(about = "AI-powered coding assistant", long_about = None)]
 struct Cli {
     /// Model to use (e.g., anthropic/claude-3.5-sonnet, openai/gpt-4o)
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     model: Option<String>,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Configure kicode (API key and settings)
+    Setup,
 }
 
 const SYSTEM_PROMPT: &str = r#"You are Kicode, an AI coding assistant running in a terminal. You help users with programming tasks by reading, writing, and editing code files, running shell commands, and searching codebases.
@@ -40,14 +51,22 @@ async fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    let config = match Config::load(cli.model) {
+    // Handle explicit setup command
+    if let Some(Commands::Setup) = cli.command {
+        run_setup_command().await?;
+        return Ok(());
+    }
+
+    // Try to load config, or run first-run setup if API key is missing
+    let config = match Config::load(cli.model.clone()) {
         Ok(c) => c,
+        Err(KicodeError::Config(msg)) if msg.contains("API key not found") => {
+            // API key missing - run interactive setup
+            run_first_run_setup().await?
+        }
         Err(e) => {
             eprintln!("Configuration error: {}", e);
-            eprintln!("\nSet OPENROUTER_API_KEY via:");
-            eprintln!("  1. .env file (copy .env.example)");
-            eprintln!("  2. Environment variable");
-            eprintln!("  3. ~/.config/kicode/config.toml");
+            eprintln!("\nRun 'kicode setup' to configure.");
             std::process::exit(1);
         }
     };

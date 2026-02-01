@@ -1,4 +1,4 @@
-use crate::api::types::{Delta, DeltaToolCall, Message, Role, ToolCall, FunctionCall};
+use crate::api::types::{Delta, DeltaToolCall, FunctionCall, Message, Role, ToolCall};
 
 #[derive(Debug, Default)]
 pub struct StreamAccumulator {

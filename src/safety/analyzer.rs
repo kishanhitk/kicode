@@ -12,7 +12,6 @@ impl SafetyAnalyzer {
             r"\brmdir\b",
             r"\bunlink\b",
             r"\bshred\b",
-
             // Privilege escalation
             r"\bsudo\b",
             r"\bsu\s",
@@ -20,7 +19,6 @@ impl SafetyAnalyzer {
             r"\bchmod\s+[0-7]*[2367][0-7]*\b", // setuid/setgid/sticky
             r"\bchown\b",
             r"\bchgrp\b",
-
             // Git destructive operations
             r"\bgit\s+push\s+(-f|--force)",
             r"\bgit\s+reset\s+--hard",
@@ -28,7 +26,6 @@ impl SafetyAnalyzer {
             r"\bgit\s+branch\s+-[dD]",
             r"\bgit\s+checkout\s+\.",
             r"\bgit\s+restore\s+\.",
-
             // System/disk operations
             r"\bmkfs\b",
             r"\bdd\s+",
@@ -39,17 +36,14 @@ impl SafetyAnalyzer {
             r"\bsystemctl\s+(stop|restart|disable)",
             r"\bservice\s+\w+\s+(stop|restart)",
             r"\blaunchctl\s+(unload|remove)",
-
             // Dangerous pipes - remote code execution
             r"\bcurl\s+.*\|\s*(sh|bash|zsh|python|perl|ruby)",
             r"\bwget\s+.*\|\s*(sh|bash|zsh|python|perl|ruby)",
             r"\bcurl\s+.*>\s*/",
             r"\bwget\s+.*-O\s*/",
-
             // Eval and command substitution with external input
             r"\beval\s+",
             r"\bsource\s+/dev/stdin",
-
             // Dangerous redirects to system files
             r">\s*/etc/",
             r">\s*~/\.(bashrc|zshrc|profile|bash_profile)",
@@ -57,17 +51,14 @@ impl SafetyAnalyzer {
             r">\s*/bin/",
             r">\s*/sbin/",
             r">\s*/var/",
-
             // Process killing
             r"\bkill\s+-9\b",
             r"\bkillall\b",
             r"\bpkill\b",
-
             // Network operations that could be dangerous
             r"\biptables\b",
             r"\bufw\b",
             r"\bfirewall-cmd\b",
-
             // Package managers (can install malware)
             r"\bapt(-get)?\s+install\b",
             r"\byum\s+install\b",
@@ -77,16 +68,13 @@ impl SafetyAnalyzer {
             r"\bnpm\s+install\s+-g",
             r"\bpip\s+install\b",
             r"\bcargo\s+install\b",
-
             // Container/VM operations
             r"\bdocker\s+(rm|rmi|stop|kill)",
             r"\bpodman\s+(rm|rmi|stop|kill)",
             r"\bkubectl\s+delete",
-
             // Cron/scheduled tasks
             r"\bcrontab\b",
             r"\bat\s+",
-
             // SSH/remote operations
             r"\bssh\s+.*@",
             r"\bscp\s+",
@@ -111,7 +99,9 @@ impl SafetyAnalyzer {
     }
 
     pub fn is_dangerous(&self, command: &str) -> bool {
-        self.patterns.iter().any(|pattern| pattern.is_match(command))
+        self.patterns
+            .iter()
+            .any(|pattern| pattern.is_match(command))
     }
 
     pub fn get_matching_patterns(&self, command: &str) -> Vec<String> {

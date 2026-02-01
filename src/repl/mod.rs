@@ -107,7 +107,11 @@ impl Repl {
             println!();
 
             // Check for empty response after tool calls (provider bug workaround)
-            let is_empty = response.content.as_ref().map(|s| s.is_empty()).unwrap_or(true)
+            let is_empty = response
+                .content
+                .as_ref()
+                .map(|s| s.is_empty())
+                .unwrap_or(true)
                 && response.tool_calls.is_none();
 
             if after_tools && is_empty && retries < 2 {
@@ -122,7 +126,10 @@ impl Repl {
 
             if let Some(ref tool_calls) = response.tool_calls {
                 for tool_call in tool_calls {
-                    output::print_tool_call(&tool_call.function.name, &tool_call.function.arguments);
+                    output::print_tool_call(
+                        &tool_call.function.name,
+                        &tool_call.function.arguments,
+                    );
 
                     let result = self
                         .execute_tool(&tool_call.function.name, &tool_call.function.arguments)
