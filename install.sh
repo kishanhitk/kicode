@@ -1,6 +1,6 @@
 #!/bin/sh
 # Kicode installer script
-# Usage: curl -fsSL https://raw.githubusercontent.com/kishanhitk/kicode/master/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/kishanhitk/kicode/main/install.sh | sh
 
 set -e
 
