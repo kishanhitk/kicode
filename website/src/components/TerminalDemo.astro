@@ -104,9 +104,9 @@
             <!-- Interactive input line (shown after demo) -->
             <div class="terminal-line input-line" id="input-line" style="opacity: 0;">
                 <span class="terminal-prompt">>></span>
-                <input 
-                    type="text" 
-                    class="terminal-input" 
+                <input
+                    type="text"
+                    class="terminal-input"
                     id="terminal-input"
                     placeholder="Type a message..."
                     autocomplete="off"
@@ -121,7 +121,7 @@
     // ============================================
     // TERMINAL ANIMATION CONFIGURATION
     // ============================================
-    
+
     const CONFIG = {
         welcome: {
             line1: 300,
@@ -132,7 +132,7 @@
         aiResponseDelay: 900,
         gaps: {
             aiToTool: 500,
-            toolToTool: 400,
+            toolToTool: 500,
             toolToAi: 600,
         },
         typingSpeed: {
@@ -146,7 +146,7 @@
     // ============================================
     // MOCK AI RESPONSES
     // ============================================
-    
+
     const MOCK_RESPONSES = {
         '/help': [
             { type: 'ai', content: 'Available commands:' },
@@ -181,7 +181,7 @@
     // ============================================
     // CALCULATED TIMING
     // ============================================
-    
+
     const TIMING = {
         line4: CONFIG.userInput,
         line5: CONFIG.userInput + (90 * CONFIG.typingSpeed.user) + CONFIG.aiResponseDelay,
@@ -226,7 +226,7 @@
     // ============================================
     // UTILITY FUNCTIONS
     // ============================================
-    
+
     function typeLine(element, text, speed = CONFIG.typingSpeed.ai) {
         return new Promise((resolve) => {
             let i = 0;
@@ -255,7 +255,7 @@
         line.style.opacity = '0';
         line.style.transform = 'translateY(4px)';
         line.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        
+
         if (type === 'user') {
             line.innerHTML = `<span class="terminal-prompt">>></span><span class="text-terminal">${escapeHtml(content)}</span>`;
         } else if (type === 'ai') {
@@ -263,7 +263,7 @@
         } else if (type === 'tool') {
             line.innerHTML = `<span class="text-muted-terminal">${escapeHtml(content)}</span>`;
         }
-        
+
         return line;
     }
 
@@ -283,41 +283,45 @@
     // ============================================
     // INTERACTIVE TERMINAL
     // ============================================
-    
+
     let isInteractive = false;
 
     function initInteractiveTerminal() {
         const input = document.getElementById('terminal-input');
         const inputLine = document.getElementById('input-line');
         const content = document.getElementById('terminal-content');
-        
+
         if (!input || !inputLine || !content) return;
-        
+
         isInteractive = true;
-        
+
         // Show input line
         inputLine.style.opacity = '1';
-        input.focus();
         
+        // Focus input after a small delay to ensure visibility
+        setTimeout(() => {
+            input.focus();
+        }, 100);
+
         // Handle input
         input.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 const message = input.value.trim();
                 if (!message) return;
-                
+
                 // Add user message
                 const userLine = createLine(message, 'user');
                 content.insertBefore(userLine, inputLine);
-                
+
                 // Animate user line
                 requestAnimationFrame(() => {
                     userLine.style.opacity = '1';
                     userLine.style.transform = 'translateY(0)';
                 });
-                
+
                 input.value = '';
                 scrollToBottom();
-                
+
                 // Handle commands
                 if (message === '/clear') {
                     // Remove all interactive lines
@@ -325,31 +329,31 @@
                     interactiveLines.forEach(line => line.remove());
                     return;
                 }
-                
+
                 // Get response
                 const responses = MOCK_RESPONSES[message.toLowerCase()] || MOCK_RESPONSES['default'];
-                
+
                 // Show typing indicator briefly
                 await new Promise(r => setTimeout(r, 300));
-                
+
                 // Add responses with delay
                 for (const response of responses) {
                     await new Promise(r => setTimeout(r, 200));
                     const line = createLine(response.content, response.type);
                     content.insertBefore(line, inputLine);
-                    
+
                     requestAnimationFrame(() => {
                         line.style.opacity = '1';
                         line.style.transform = 'translateY(0)';
                     });
-                    
+
                     scrollToBottom();
                 }
-                
+
                 scrollToBottom();
             }
         });
-        
+
         // Focus input when clicking anywhere in terminal
         document.getElementById('terminal-demo').addEventListener('click', (e) => {
             if (e.target.tagName !== 'INPUT') {
@@ -361,7 +365,7 @@
     // ============================================
     // MAIN ANIMATION SEQUENCE
     // ============================================
-    
+
     document.addEventListener('DOMContentLoaded', () => {
         const lines = [
             { selector: '.line-3', delay: CONFIG.welcome.line3 },
