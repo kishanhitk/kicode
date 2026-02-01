@@ -1,0 +1,174 @@
+---
+title: Configuration
+description: How to configure kicode settings and API keys
+---
+
+import { FileTree, Steps } from '@astrojs/starlight/components';
+
+kicode uses a simple configuration file and environment variables. This guide covers all configuration options.
+
+## Configuration File
+
+kicode stores its configuration at:
+
+```
+~/.config/kicode/config.toml
+```
+
+### Basic Configuration
+
+Here's a minimal configuration file:
+
+```toml
+# ~/.config/kicode/config.toml
+
+# Your OpenRouter API key
+api_key = "sk-or-v1-..."
+
+# Default model to use
+model = "anthropic/claude-3.5-sonnet"
+```
+
+### Full Configuration
+
+```toml
+# ~/.config/kicode/config.toml
+
+# OpenRouter API key (required)
+api_key = "sk-or-v1-your-key-here"
+
+# Default model (optional, defaults to x-ai/grok-code-fast-1)
+model = "anthropic/claude-3.5-sonnet"
+
+# Safety settings
+[safety]
+# Additional patterns to flag as dangerous (regex)
+additional_patterns = [
+  "\\bmy-custom-dangerous-command\\b"
+]
+
+# Commands that skip confirmation (use with caution)
+skip_confirmation = []
+```
+
+## Getting an API Key
+
+<Steps>
+
+1. **Sign up for OpenRouter**
+
+   Visit [openrouter.ai](https://openrouter.ai) and create an account.
+
+2. **Generate an API key**
+
+   Go to [openrouter.ai/keys](https://openrouter.ai/keys) and create a new key.
+
+3. **Configure kicode**
+
+   Run the setup wizard or manually add the key:
+   ```bash
+   # Option 1: Run setup wizard
+   kicode
+   # (Follow the prompts)
+
+   # Option 2: Set environment variable
+   export OPENROUTER_API_KEY="sk-or-v1-your-key"
+
+   # Option 3: Edit config file
+   mkdir -p ~/.config/kicode
+   echo 'api_key = "sk-or-v1-your-key"' > ~/.config/kicode/config.toml
+   ```
+
+</Steps>
+
+## Environment Variables
+
+Environment variables override config file settings:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `OPENROUTER_API_KEY` | API key for OpenRouter | `sk-or-v1-...` |
+| `KICODE_MODEL` | Override default model | `openai/gpt-4` |
+| `KICODE_DEBUG` | Enable debug output | `1` |
+
+### Setting Environment Variables
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc for persistence
+export OPENROUTER_API_KEY="sk-or-v1-your-key-here"
+
+# Or set per-session
+OPENROUTER_API_KEY="sk-or-v1-..." kicode
+```
+
+## Configuration Priority
+
+Settings are applied in this order (later overrides earlier):
+
+1. **Default values** - Built-in defaults
+2. **Config file** - `~/.config/kicode/config.toml`
+3. **Environment variables** - `OPENROUTER_API_KEY`, `KICODE_MODEL`
+4. **CLI arguments** - `--model` flag
+
+Example:
+```bash
+# Uses CLI argument over all other settings
+kicode --model openai/gpt-4-turbo
+```
+
+## Model Selection
+
+kicode supports any model available through OpenRouter. Common choices:
+
+| Model | ID | Best For |
+|-------|-----|----------|
+| Claude 3.5 Sonnet | `anthropic/claude-3.5-sonnet` | General coding, complex tasks |
+| GPT-4 Turbo | `openai/gpt-4-turbo` | Broad knowledge, long context |
+| Grok Code Fast | `x-ai/grok-code-fast-1` | Fast responses (default) |
+| Claude 3 Opus | `anthropic/claude-3-opus` | Most capable, higher cost |
+
+See [Models Reference](/reference/models) for a complete list.
+
+## Safety Configuration
+
+The `[safety]` section controls command safety analysis:
+
+```toml
+[safety]
+# Add custom patterns to flag as dangerous
+additional_patterns = [
+  "\\bmy-risky-script\\b",
+  "\\bdeploy-to-prod\\b"
+]
+
+# Skip confirmation for specific safe commands (advanced)
+skip_confirmation = []
+```
+
+:::caution
+Only modify safety settings if you understand the implications. The default patterns protect against common dangerous operations.
+:::
+
+## Configuration Directory Structure
+
+<FileTree>
+- ~/.config/kicode/
+  - config.toml  Main configuration file
+</FileTree>
+
+## Validating Configuration
+
+Check your configuration is valid:
+
+```bash
+# Start kicode - it will report config errors
+kicode
+
+# Check model is set correctly
+kicode --model invalid-model
+# Error: Unknown model: invalid-model
+```
+
+## Next Steps
+
+Learn how to use kicode in your [First Session](/getting-started/first-session).

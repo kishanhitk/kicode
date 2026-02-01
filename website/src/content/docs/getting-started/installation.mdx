@@ -1,0 +1,137 @@
+---
+title: Installation
+description: How to install kicode on your system
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+There are several ways to install kicode. Choose the method that works best for your setup.
+
+## Quick Install (Recommended)
+
+The fastest way to install kicode is using our install script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kishanhitk/kicode/main/install.sh | sh
+```
+
+This script will:
+- Download the latest release for your platform
+- Install the binary to `~/.local/bin`
+- Add the directory to your PATH if needed
+- Run the interactive setup wizard
+
+## Install via Cargo
+
+If you have Rust installed, you can build from source:
+
+```bash
+cargo install --git https://github.com/kishanhitk/kicode.git
+```
+
+This compiles kicode with optimizations and installs it to `~/.cargo/bin`.
+
+## Manual Installation
+
+<Steps>
+
+1. **Download the binary**
+
+   Visit the [releases page](https://github.com/kishanhitk/kicode/releases) and download the appropriate binary for your system.
+
+2. **Make it executable**
+
+   ```bash
+   chmod +x kicode
+   ```
+
+3. **Move to your PATH**
+
+   ```bash
+   sudo mv kicode /usr/local/bin/
+   # or for user-only installation:
+   mv kicode ~/.local/bin/
+   ```
+
+4. **Verify installation**
+
+   ```bash
+   kicode --version
+   ```
+
+</Steps>
+
+## Platform Support
+
+| Platform | Architecture | Status |
+|----------|-------------|--------|
+| macOS | ARM64 (M1/M2/M3) | ✅ Supported |
+| macOS | Intel x64 | 🔧 Build from source |
+| Linux | x64 | 🔧 Build from source |
+| Windows | x64 | 🔧 Build from source |
+
+:::note
+Pre-built binaries are currently available for macOS ARM64. Other platforms can build from source using Cargo.
+:::
+
+## Verify Installation
+
+After installation, verify kicode is working:
+
+```bash
+kicode --version
+# Output: kicode 0.1.0
+```
+
+## First Run
+
+On first run, kicode will launch the interactive setup wizard if no API key is configured:
+
+```
+Welcome to kicode!
+
+It looks like you haven't configured an API key yet.
+Would you like to set it up now? [Y/n]
+```
+
+Follow the prompts to configure your OpenRouter API key. See [Configuration](/getting-started/configuration) for details.
+
+## Troubleshooting
+
+### Command not found
+
+If you get "command not found" after installation:
+
+1. **Check your PATH**
+   ```bash
+   echo $PATH | tr ':' '\n' | grep -E "(local/bin|cargo/bin)"
+   ```
+
+2. **Add to PATH** (if missing)
+
+   Add to your `~/.bashrc` or `~/.zshrc`:
+   ```bash
+   export PATH="$HOME/.local/bin:$PATH"
+   ```
+
+3. **Reload your shell**
+   ```bash
+   source ~/.bashrc  # or ~/.zshrc
+   ```
+
+### Permission denied
+
+If the install script fails with permission errors:
+
+```bash
+# Create the directory with proper permissions
+mkdir -p ~/.local/bin
+chmod 755 ~/.local/bin
+
+# Re-run the installer
+curl -fsSL https://raw.githubusercontent.com/kishanhitk/kicode/main/install.sh | sh
+```
+
+## Next Steps
+
+Once installed, learn how to [configure kicode](/getting-started/configuration) for your workflow.

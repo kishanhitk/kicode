@@ -1,0 +1,233 @@
+---
+title: Environment Variables
+description: All environment variables used by kicode
+---
+
+kicode uses several environment variables for configuration. These override settings from the config file.
+
+## Required Variables
+
+### `OPENROUTER_API_KEY`
+
+Your OpenRouter API key for authentication.
+
+| Property | Value |
+|----------|-------|
+| Required | Yes (unless set in config file) |
+| Format | `sk-or-v1-...` |
+| Overrides | `api_key` in config file |
+
+**Get a key:** [openrouter.ai/keys](https://openrouter.ai/keys)
+
+```bash
+export OPENROUTER_API_KEY="sk-or-v1-your-key-here"
+```
+
+## Optional Variables
+
+### `KICODE_MODEL`
+
+Override the default AI model.
+
+| Property | Value |
+|----------|-------|
+| Required | No |
+| Format | OpenRouter model ID |
+| Default | `x-ai/grok-code-fast-1` |
+| Overrides | `model` in config file |
+
+```bash
+export KICODE_MODEL="anthropic/claude-3.5-sonnet"
+```
+
+### `KICODE_DEBUG`
+
+Enable debug output for troubleshooting.
+
+| Property | Value |
+|----------|-------|
+| Required | No |
+| Format | `1` to enable |
+| Default | Disabled |
+
+```bash
+export KICODE_DEBUG=1
+```
+
+When enabled, kicode prints:
+- API request/response details
+- Tool execution details
+- Configuration loading info
+
+## Setting Environment Variables
+
+### Temporary (Current Session)
+
+```bash
+# Set for current terminal session
+export OPENROUTER_API_KEY="sk-or-v1-..."
+
+# Or set for a single command
+OPENROUTER_API_KEY="sk-or-v1-..." kicode
+```
+
+### Permanent (Shell Profile)
+
+Add to your shell configuration file:
+
+**Bash (`~/.bashrc`):**
+```bash
+export OPENROUTER_API_KEY="sk-or-v1-..."
+export KICODE_MODEL="anthropic/claude-3.5-sonnet"
+```
+
+**Zsh (`~/.zshrc`):**
+```bash
+export OPENROUTER_API_KEY="sk-or-v1-..."
+export KICODE_MODEL="anthropic/claude-3.5-sonnet"
+```
+
+**Fish (`~/.config/fish/config.fish`):**
+```fish
+set -gx OPENROUTER_API_KEY "sk-or-v1-..."
+set -gx KICODE_MODEL "anthropic/claude-3.5-sonnet"
+```
+
+After editing, reload your shell:
+```bash
+source ~/.bashrc  # or ~/.zshrc
+```
+
+### Per-Project (dotenv)
+
+While kicode doesn't automatically load `.env` files, you can use tools like `direnv`:
+
+```bash
+# .envrc in your project
+export KICODE_MODEL="anthropic/claude-3.5-sonnet"
+```
+
+## Priority Order
+
+When a setting is available from multiple sources:
+
+1. **CLI arguments** (highest priority)
+   - `kicode --model xyz`
+
+2. **Environment variables**
+   - `KICODE_MODEL="xyz"`
+
+3. **Config file**
+   - `model = "xyz"` in config.toml
+
+4. **Built-in defaults** (lowest priority)
+
+Example:
+```bash
+# Config file: model = "gpt-4"
+# Environment: KICODE_MODEL="claude-3"
+# CLI: --model opus
+
+kicode --model opus
+# Uses: opus (CLI wins)
+
+kicode
+# Uses: claude-3 (env wins over config)
+```
+
+## Checking Current Values
+
+To see what values kicode is using:
+
+```bash
+# Enable debug mode
+KICODE_DEBUG=1 kicode
+
+# Output shows loaded configuration
+```
+
+## Common Patterns
+
+### Different Models per Project
+
+```bash
+# In project A
+cd ~/project-a
+KICODE_MODEL="anthropic/claude-3.5-sonnet" kicode
+
+# In project B
+cd ~/project-b
+KICODE_MODEL="openai/gpt-4-turbo" kicode
+```
+
+### Testing with Debug Mode
+
+```bash
+# One-time debug session
+KICODE_DEBUG=1 kicode
+```
+
+### Quick Model Override
+
+```bash
+# Use a specific model without changing config
+kicode --model anthropic/claude-3-opus
+```
+
+## Troubleshooting
+
+### "API key not found" Error
+
+The API key is not set anywhere.
+
+**Check:**
+```bash
+echo $OPENROUTER_API_KEY
+# Should print your key
+```
+
+**Fix:**
+```bash
+export OPENROUTER_API_KEY="sk-or-v1-..."
+```
+
+### Environment Variable Not Taking Effect
+
+Shell may need to be reloaded.
+
+**Fix:**
+```bash
+source ~/.bashrc  # or ~/.zshrc
+# Or open a new terminal
+```
+
+### Variable Set but Wrong Value Used
+
+CLI argument or later-set variable may be overriding.
+
+**Check:**
+```bash
+KICODE_DEBUG=1 kicode
+# Look for "Using model:" in output
+```
+
+## Security Notes
+
+1. **Don't commit API keys**
+   - Never add keys to version control
+   - Use `.gitignore` for any local env files
+
+2. **Restrict file permissions**
+   - Shell profiles should be readable only by you
+   - `chmod 600 ~/.bashrc`
+
+3. **Consider secret managers**
+   - For production/team use, consider tools like:
+   - 1Password CLI
+   - HashiCorp Vault
+   - AWS Secrets Manager
+
+## Related
+
+- [Configuration Reference](/reference/configuration) - Config file options
+- [Models Reference](/reference/models) - Available models

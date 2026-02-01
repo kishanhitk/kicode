@@ -1,0 +1,225 @@
+---
+title: grep
+description: Search for patterns in files using regex
+---
+
+The `grep` tool searches for patterns in your files using regular expressions. It's perfect for finding code, tracking down references, and understanding your codebase.
+
+## Description
+
+Search for a pattern in files. Supports regex patterns. Returns matching lines with file paths and line numbers. Automatically skips binary files and hidden directories.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `pattern` | string | Yes | The regex pattern to search for |
+| `path` | string | No | File or directory to search (defaults to `.`) |
+| `file_pattern` | string | No | Glob pattern to filter files (e.g., `*.rs`) |
+| `max_results` | integer | No | Maximum matches to return (default: 50) |
+| `context_lines` | integer | No | Lines of context around each match (default: 0) |
+
+## Examples
+
+### Basic Search
+
+```
+you: Find all uses of "Config" in the codebase
+
+ai: I'll search for Config across all files.
+
+[tool: grep]
+  pattern: "Config"
+
+Found 12 matches:
+
+src/config.rs:4:> pub struct Config {
+src/config.rs:10:> impl Config {
+src/main.rs:3:> use crate::config::Config;
+src/main.rs:8:>     let config = Config::load()?;
+...
+```
+
+### With File Pattern Filter
+
+```
+you: Find all TODO comments in Rust files
+
+ai: I'll search for TODO in .rs files only.
+
+[tool: grep]
+  pattern: "TODO"
+  file_pattern: "*.rs"
+
+Found 3 matches:
+
+src/main.rs:15:> // TODO: Add error handling
+src/lib.rs:42:> // TODO: Implement caching
+src/config.rs:8:> // TODO: Support env vars
+```
+
+### With Context Lines
+
+```
+you: Find the parse_config function with surrounding context
+
+ai: I'll search with context lines to show the function.
+
+[tool: grep]
+  pattern: "fn parse_config"
+  context_lines: 3
+
+Found 1 match:
+
+src/config.rs:20:  use std::fs;
+src/config.rs:21:
+src/config.rs:22:> fn parse_config(content: &str) -> Result<Config> {
+src/config.rs:23:      toml::from_str(content)
+src/config.rs:24:          .map_err(|e| Error::Parse(e.to_string()))
+src/config.rs:25:  }
+```
+
+### Regex Patterns
+
+```
+you: Find all function definitions that take a string parameter
+
+ai: I'll use a regex to find function signatures with string params.
+
+[tool: grep]
+  pattern: "fn \\w+\\([^)]*&?str"
+
+Found 5 matches:
+
+src/main.rs:20:> fn process_input(input: &str) -> Result<()>
+src/config.rs:15:> fn load_from_path(path: &str) -> Result<Config>
+...
+```
+
+## Output Format
+
+### Basic Output
+
+```
+{file}:{line}:> {content}
+```
+
+The `>` marker indicates the actual matching line.
+
+### With Context
+
+```
+{file}:{line}:  {context before}
+{file}:{line}:> {matching line}
+{file}:{line}:  {context after}
+--
+{next match group}
+```
+
+Context lines use space, matching lines use `>`.
+
+### No Matches
+
+```
+No matches found.
+```
+
+### Truncated Results
+
+```
+Found 50 matches:
+...
+(showing first 50 results)
+```
+
+## Regex Syntax
+
+Common patterns:
+
+| Pattern | Matches |
+|---------|---------|
+| `word` | Literal "word" |
+| `\bword\b` | "word" as whole word |
+| `func\(` | "func(" literally |
+| `TODO\|FIXME` | Either TODO or FIXME |
+| `fn \w+` | "fn " followed by word chars |
+| `#\[derive` | Rust derive attributes |
+| `import.*from` | JS/TS imports |
+
+## Skipped Files
+
+grep automatically skips:
+
+### Hidden Files
+- `.git/`, `.env`, `.gitignore`
+
+### Binary Extensions
+- Images: `png`, `jpg`, `gif`, `ico`, `webp`
+- Documents: `pdf`, `doc`, `docx`
+- Archives: `zip`, `tar`, `gz`
+- Executables: `exe`, `dll`, `so`, `dylib`
+- Media: `mp3`, `mp4`, `wav`
+- Fonts: `ttf`, `woff`, `woff2`
+- Databases: `sqlite`, `db`
+
+## Use Cases
+
+### Find Function Usage
+
+```
+grep: "parse_config"
+# Shows all calls to parse_config
+```
+
+### Find Type Definitions
+
+```
+grep: "struct Config"
+file_pattern: "*.rs"
+# Finds the Config struct definition
+```
+
+### Find Error Messages
+
+```
+grep: "Error:.*"
+# Finds error messages in code
+```
+
+### Track Dependencies
+
+```
+grep: "use serde"
+# Finds all serde imports
+```
+
+## Best Practices
+
+1. **Start broad, then filter**
+   - Begin with simple pattern
+   - Add `file_pattern` to narrow down
+
+2. **Use `\b` for word boundaries**
+   - `\bConfig\b` won't match "ConfigLoader"
+
+3. **Escape special characters**
+   - `\.`, `\(`, `\[` for literals
+
+4. **Request context for understanding**
+   - `context_lines: 2` helps see usage
+
+5. **Combine with read_file**
+   - Find with grep, then read the full file
+
+## Error Handling
+
+| Error | Cause |
+|-------|-------|
+| `Invalid regex pattern: ...` | Syntax error in pattern |
+| `No matches found.` | Pattern not found in scope |
+
+## Related Tools
+
+- [read_file](/tools/read-file) - Read full files after finding matches
+- [glob_search](/tools/glob-search) - Find files by name pattern
+- [edit_file](/tools/edit-file) - Edit after finding location

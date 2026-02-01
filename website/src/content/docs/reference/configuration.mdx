@@ -1,0 +1,221 @@
+---
+title: Configuration Reference
+description: Complete reference for kicode configuration options
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+
+This page documents all configuration options available in kicode.
+
+## Configuration File
+
+kicode stores configuration at:
+
+```
+~/.config/kicode/config.toml
+```
+
+<FileTree>
+- ~/.config/
+  - kicode/
+    - config.toml  Your configuration file
+</FileTree>
+
+## Complete Configuration Example
+
+```toml
+# ~/.config/kicode/config.toml
+
+# OpenRouter API key (required)
+# Get one at https://openrouter.ai/keys
+api_key = "sk-or-v1-your-api-key-here"
+
+# Default model to use (optional)
+# Defaults to: x-ai/grok-code-fast-1
+model = "anthropic/claude-3.5-sonnet"
+
+# Safety configuration
+[safety]
+
+# Additional regex patterns to flag as dangerous
+# These are added to the built-in patterns
+additional_patterns = [
+  "\\bmy-risky-script\\b",
+  "\\bdeploy-prod\\b"
+]
+
+# Commands that skip confirmation prompts
+# Use with extreme caution
+skip_confirmation = []
+```
+
+## Configuration Options
+
+### `api_key`
+
+| Property | Value |
+|----------|-------|
+| Type | `string` |
+| Required | Yes (or via `OPENROUTER_API_KEY` env var) |
+| Default | None |
+
+Your OpenRouter API key for authentication.
+
+```toml
+api_key = "sk-or-v1-abcd1234..."
+```
+
+### `model`
+
+| Property | Value |
+|----------|-------|
+| Type | `string` |
+| Required | No |
+| Default | `x-ai/grok-code-fast-1` |
+
+The AI model to use. Must be a valid OpenRouter model ID.
+
+```toml
+model = "anthropic/claude-3.5-sonnet"
+```
+
+See [Models Reference](/reference/models) for available options.
+
+### `[safety]` Section
+
+Configuration for command safety analysis.
+
+#### `additional_patterns`
+
+| Property | Value |
+|----------|-------|
+| Type | `array of strings` |
+| Required | No |
+| Default | `[]` |
+
+Regex patterns for commands that should be flagged as dangerous in addition to the built-in patterns.
+
+```toml
+[safety]
+additional_patterns = [
+  "\\bmy-deploy-script\\b",
+  "\\brm.*production\\b"
+]
+```
+
+#### `skip_confirmation`
+
+| Property | Value |
+|----------|-------|
+| Type | `array of strings` |
+| Required | No |
+| Default | `[]` |
+
+Commands that should skip the safety confirmation prompt. Use with extreme caution.
+
+```toml
+[safety]
+skip_confirmation = []
+```
+
+:::danger
+Modifying `skip_confirmation` can be dangerous. Only add commands you fully trust.
+:::
+
+## Environment Variables
+
+Environment variables override config file settings.
+
+| Variable | Overrides | Example |
+|----------|-----------|---------|
+| `OPENROUTER_API_KEY` | `api_key` | `sk-or-v1-...` |
+| `KICODE_MODEL` | `model` | `openai/gpt-4` |
+| `KICODE_DEBUG` | (debug mode) | `1` |
+
+### Setting Environment Variables
+
+**Temporary (current session):**
+```bash
+export OPENROUTER_API_KEY="sk-or-v1-..."
+kicode
+```
+
+**Permanent (add to shell profile):**
+```bash
+# ~/.bashrc or ~/.zshrc
+export OPENROUTER_API_KEY="sk-or-v1-..."
+```
+
+## Configuration Priority
+
+Settings are resolved in this order (later wins):
+
+1. **Built-in defaults**
+2. **Config file** (`~/.config/kicode/config.toml`)
+3. **Environment variables** (`OPENROUTER_API_KEY`, `KICODE_MODEL`)
+4. **CLI arguments** (`--model`)
+
+Example:
+```bash
+# Config file has: model = "gpt-4"
+# Environment has: KICODE_MODEL="claude-3"
+# CLI has: --model opus
+
+# Result: Uses "opus" (CLI wins)
+kicode --model opus
+```
+
+## Creating the Config File
+
+### Automatic (Setup Wizard)
+
+Run kicode without configuration to launch the setup wizard:
+
+```bash
+kicode
+# Follow the interactive prompts
+```
+
+### Manual
+
+```bash
+# Create config directory
+mkdir -p ~/.config/kicode
+
+# Create config file
+cat > ~/.config/kicode/config.toml << 'EOF'
+api_key = "sk-or-v1-your-key-here"
+model = "anthropic/claude-3.5-sonnet"
+EOF
+```
+
+## Validating Configuration
+
+kicode validates your configuration on startup:
+
+```bash
+kicode
+# If config is valid, you'll see the welcome message
+# If invalid, you'll see an error with details
+```
+
+Common validation errors:
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `API key not found` | No key in config or env | Add `api_key` or set `OPENROUTER_API_KEY` |
+| `Invalid config file` | Syntax error in TOML | Check TOML syntax |
+
+## Config File Locations by Platform
+
+| Platform | Location |
+|----------|----------|
+| macOS | `~/.config/kicode/config.toml` |
+| Linux | `~/.config/kicode/config.toml` |
+| Windows | `%APPDATA%\kicode\config.toml` |
+
+## Related
+
+- [Environment Variables](/reference/environment) - All environment variables
+- [Models Reference](/reference/models) - Available AI models
+- [Safety Reference](/reference/safety) - Safety patterns

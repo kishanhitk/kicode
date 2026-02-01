@@ -1,0 +1,127 @@
+---
+title: write_file
+description: Create new files or overwrite existing files
+---
+
+The `write_file` tool creates new files or completely overwrites existing ones. It automatically creates parent directories if they don't exist.
+
+## Description
+
+Write content to a file at the specified path. Creates the file if it doesn't exist, or overwrites if it does. Parent directories are created automatically as needed.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `path` | string | Yes | The path to the file to write |
+| `content` | string | Yes | The content to write to the file |
+
+## Examples
+
+### Create a New File
+
+```text
+you: Create a README with basic project info
+
+ai: I'll create a README file for you.
+
+[tool: write_file]
+  path: "README.md"
+  content: "# My Project\n\nA brief description..."
+
+Successfully wrote 8 lines to README.md
+```
+
+### Create File in New Directory
+
+```text
+you: Create a test file at tests/unit/config_test.rs
+
+ai: I'll create the test file. The directories will be created automatically.
+
+[tool: write_file]
+  path: "tests/unit/config_test.rs"
+  content: "#[cfg(test)]\nmod tests ..."
+
+Successfully wrote 10 lines to tests/unit/config_test.rs
+```
+
+## Output Format
+
+On success:
+```text
+Successfully wrote 8 lines to path/to/file.txt
+```
+
+On error:
+```text
+Failed to write file: Permission denied
+```
+
+## Behavior Notes
+
+### Directory Creation
+
+Parent directories are created automatically:
+
+```text
+write_file("a/b/c/file.txt", content)
+# Creates: a/, a/b/, a/b/c/ if they don't exist
+```
+
+### Overwrites Completely
+
+`write_file` replaces the entire file content:
+
+```text
+# Original file: "Hello World"
+write_file("file.txt", "Goodbye")
+# Result: "Goodbye" (original content is gone)
+```
+
+For partial edits, use [edit_file](/tools/edit-file) instead.
+
+## Error Handling
+
+| Error | Cause |
+|-------|-------|
+| `Failed to create directories` | Permission denied or invalid path |
+| `Failed to write file: Permission denied` | No write permission |
+| `Failed to write file: Read-only file system` | Filesystem is read-only |
+
+## Use Cases
+
+### When to Use write_file
+
+- Creating new files from scratch
+- Generating boilerplate code
+- Writing configuration files
+- Creating test fixtures
+- Replacing entire file contents
+
+### When to Use edit_file Instead
+
+- Modifying part of an existing file
+- Adding a function to existing code
+- Fixing a bug in specific lines
+- Updating imports or dependencies
+
+## Best Practices
+
+1. **Review before writing**
+   - Ask the AI to show the content before writing
+   - Verify the path is correct
+
+2. **Use edit_file for modifications**
+   - Safer for existing files
+   - Preserves content you don't want to change
+
+3. **Consider file organization**
+   - Let kicode create appropriate directory structure
+   - Follow project conventions for file placement
+
+## Related Tools
+
+- [read_file](/tools/read-file) - Read file contents
+- [edit_file](/tools/edit-file) - Make targeted edits
+- [glob_search](/tools/glob-search) - Find existing files before writing

@@ -1,2 +1,7 @@
 /target
 .env
+
+# Website build artifacts
+website/node_modules
+website/dist
+website/.astro

@@ -1,0 +1,126 @@
+---
+// Animated terminal demo showing kicode in action
+---
+
+<div class="w-full max-w-3xl mx-auto">
+  <div class="bg-bg-surface rounded-lg border border-border-default shadow-2xl overflow-hidden">
+    <!-- Terminal header -->
+    <div class="flex items-center gap-2 px-4 py-3 bg-bg-elevated border-b border-border-default">
+      <div class="flex gap-2">
+        <span class="w-3 h-3 rounded-full bg-accent-danger"></span>
+        <span class="w-3 h-3 rounded-full bg-accent-warning"></span>
+        <span class="w-3 h-3 rounded-full bg-accent-green"></span>
+      </div>
+      <span class="flex-1 text-center text-text-muted text-sm font-mono">kicode</span>
+    </div>
+
+    <!-- Terminal content -->
+    <div class="p-4 md:p-6 font-mono text-sm md:text-base space-y-3 min-h-[280px]">
+      <!-- Command prompt -->
+      <div class="flex items-start gap-2">
+        <span class="text-accent-green select-none">❯</span>
+        <span class="text-text-primary">kicode</span>
+      </div>
+
+      <!-- Welcome message -->
+      <div class="text-text-secondary pl-4 border-l-2 border-accent-blue/30">
+        <div class="text-accent-blue font-semibold mb-1">kicode v0.1.0</div>
+        <div class="text-text-muted text-xs mb-2">Model: anthropic/claude-3.5-sonnet</div>
+      </div>
+
+      <!-- User input animation -->
+      <div class="flex items-start gap-2 terminal-line" data-delay="500">
+        <span class="text-accent-blue select-none">you:</span>
+        <span class="text-text-primary typing-text" data-text="Fix the bug in src/auth.rs where tokens expire too early"></span>
+      </div>
+
+      <!-- AI thinking -->
+      <div class="flex items-start gap-2 terminal-line" data-delay="3500">
+        <span class="text-accent-green select-none">ai:</span>
+        <span class="text-text-secondary">I'll analyze the token expiration logic...</span>
+      </div>
+
+      <!-- Tool execution -->
+      <div class="terminal-line" data-delay="4500">
+        <div class="bg-bg-elevated rounded p-3 mt-2 border border-border-muted">
+          <div class="flex items-center gap-2 text-text-muted text-xs mb-2">
+            <svg class="w-4 h-4 text-accent-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span>read_file</span>
+          </div>
+          <code class="text-accent-green text-xs">src/auth.rs:42-58</code>
+        </div>
+      </div>
+
+      <!-- Resolution -->
+      <div class="flex items-start gap-2 terminal-line" data-delay="5500">
+        <span class="text-accent-green select-none">ai:</span>
+        <span class="text-text-primary">Found it! The token lifetime was set to 60 seconds instead of 3600.</span>
+      </div>
+
+      <!-- Edit action -->
+      <div class="terminal-line" data-delay="6500">
+        <div class="bg-bg-elevated rounded p-3 mt-2 border border-accent-green/30">
+          <div class="flex items-center gap-2 text-accent-green text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Fixed in src/auth.rs:47</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .terminal-line {
+    opacity: 0;
+    animation: fadeInSlide 0.4s ease-out forwards;
+  }
+
+  .typing-text {
+    overflow: hidden;
+    border-right: 2px solid currentColor;
+    white-space: nowrap;
+    animation: typing 2s steps(50) forwards, blink-caret 0.75s step-end infinite;
+  }
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+  }
+
+  @keyframes blink-caret {
+    50% { border-color: transparent }
+  }
+</style>
+
+<script>
+  // Animate terminal lines with delays
+  document.addEventListener('DOMContentLoaded', () => {
+    const lines = document.querySelectorAll('.terminal-line');
+    lines.forEach((line) => {
+      const delay = parseInt(line.getAttribute('data-delay') || '0');
+      line.style.animationDelay = `${delay}ms`;
+    });
+
+    // Set typing text content
+    const typingElements = document.querySelectorAll('.typing-text');
+    typingElements.forEach((el) => {
+      el.textContent = el.getAttribute('data-text') || '';
+    });
+  });
+</script>

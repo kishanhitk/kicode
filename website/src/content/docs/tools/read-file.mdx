@@ -1,0 +1,105 @@
+---
+title: read_file
+description: Read the contents of a file with optional line range
+---
+
+The `read_file` tool reads file contents and returns them with line numbers. It supports reading entire files or specific line ranges.
+
+## Description
+
+Read the contents of a file at the specified path. Returns the file content with line numbers for easy reference.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `path` | string | Yes | The path to the file to read |
+| `start_line` | integer | No | Starting line number (1-indexed) |
+| `end_line` | integer | No | Ending line number (1-indexed, inclusive) |
+
+## Examples
+
+### Read Entire File
+
+```
+you: Show me the config file
+
+ai: I'll read the configuration file.
+
+[tool: read_file]
+  path: "src/config.rs"
+
+   1 | use serde::Deserialize;
+   2 |
+   3 | #[derive(Debug, Deserialize)]
+   4 | pub struct Config {
+   5 |     pub api_key: String,
+   6 |     pub model: String,
+   7 | }
+```
+
+### Read Specific Lines
+
+```
+you: Show me lines 10-20 of main.rs
+
+ai: I'll read lines 10 through 20.
+
+[tool: read_file]
+  path: "src/main.rs"
+  start_line: 10
+  end_line: 20
+
+  10 | fn process_input(input: &str) -> Result<()> {
+  11 |     let trimmed = input.trim();
+  12 |     if trimmed.is_empty() {
+  13 |         return Ok(());
+  14 |     }
+  15 |     // Process the input
+  16 |     handle_command(trimmed)
+  17 | }
+```
+
+## Output Format
+
+The output includes:
+- Line numbers (right-aligned, 4 characters)
+- Pipe separator
+- Actual line content
+
+```
+   1 | first line
+   2 | second line
+```
+
+For empty files, returns `(empty file)`.
+
+## Error Handling
+
+Common errors:
+
+| Error | Cause |
+|-------|-------|
+| `Failed to read file: No such file or directory` | File doesn't exist |
+| `Failed to read file: Permission denied` | No read permission |
+| `Failed to read file: Is a directory` | Path is a directory, not a file |
+
+## Best Practices
+
+1. **Start broad, then narrow**
+   - First read the whole file to understand structure
+   - Then request specific line ranges for focused work
+
+2. **Use for context**
+   - Read related files before making edits
+   - Helps the AI understand dependencies and patterns
+
+3. **Combine with grep**
+   - Use `grep` to find where something is
+   - Then `read_file` with line range to see context
+
+## Related Tools
+
+- [write_file](/tools/write-file) - Create or overwrite files
+- [edit_file](/tools/edit-file) - Make targeted edits
+- [grep](/tools/grep) - Search for patterns in files

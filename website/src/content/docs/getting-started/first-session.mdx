@@ -1,0 +1,206 @@
+---
+title: First Session
+description: Learn the basics of using kicode in your first session
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+This guide walks you through your first kicode session, from launching the app to completing tasks with AI assistance.
+
+## Starting kicode
+
+Navigate to your project directory and launch kicode:
+
+```bash
+cd ~/my-project
+kicode
+```
+
+You'll see the welcome message and prompt:
+
+```
+kicode v0.1.0
+Model: x-ai/grok-code-fast-1
+Type your message or 'exit' to quit.
+
+you:
+```
+
+## Basic Interaction
+
+Type natural language requests and kicode will respond. The AI can:
+
+- **Answer questions** about your code
+- **Read files** to understand context
+- **Write new files** when needed
+- **Edit existing files** with search-replace
+- **Execute commands** (with safety checks)
+- **Search your codebase** using grep and glob
+
+### Example Session
+
+```
+you: What files are in this project?
+
+ai: I'll search for files in the current directory.
+
+[tool: glob_search] pattern: "**/*"
+
+Found 12 files:
+src/main.rs
+src/lib.rs
+src/config.rs
+...
+
+you: Show me the main function
+
+ai: I'll read the main.rs file.
+
+[tool: read_file] path: "src/main.rs"
+
+   1 | fn main() {
+   2 |     println!("Hello, world!");
+   3 | }
+
+The main function is simple - it just prints "Hello, world!" to the console.
+```
+
+## Common Tasks
+
+### Reading Code
+
+Ask kicode to read and explain code:
+
+```
+you: What does the Config struct look like?
+```
+
+kicode will find and display the relevant code, then explain it.
+
+### Making Edits
+
+Request changes to your code:
+
+```
+you: Add error handling to the main function
+```
+
+kicode will:
+1. Read the current file
+2. Propose changes using search-replace
+3. Apply the edit
+4. Show you the result
+
+### Running Commands
+
+Execute shell commands through kicode:
+
+```
+you: Run the tests
+
+ai: I'll run the test suite for you.
+
+[tool: shell] command: "cargo test"
+
+running 5 tests
+test config::tests::test_load ... ok
+...
+
+All 5 tests passed!
+```
+
+<Aside type="caution" title="Safety First">
+Dangerous commands (like `rm -rf`, `sudo`, or force-push) require your explicit confirmation before execution.
+</Aside>
+
+### Searching Code
+
+Find patterns across your codebase:
+
+```
+you: Find all TODO comments
+
+ai: I'll search for TODO comments.
+
+[tool: grep] pattern: "TODO"
+
+Found 3 matches:
+src/main.rs:15: // TODO: Add error handling
+src/lib.rs:42: // TODO: Implement caching
+src/config.rs:8: // TODO: Support env vars
+```
+
+## Conversation Context
+
+kicode maintains context throughout your session. You can reference previous messages:
+
+```
+you: Show me the config file
+
+ai: [reads and displays config.rs]
+
+you: Add a new field called "timeout" with type u64
+
+ai: [edits config.rs to add the timeout field]
+
+you: Now update the Default implementation to include it
+
+ai: [edits the Default impl, knowing which file you meant]
+```
+
+## Exiting
+
+To end your session:
+
+```
+you: exit
+```
+
+Or press `Ctrl+C`.
+
+## Tips for Effective Use
+
+<Steps>
+
+1. **Be specific**
+
+   Instead of "fix the bug", try "fix the null pointer in parse_config when the file is empty"
+
+2. **Provide context**
+
+   "In the auth module, add rate limiting" is better than just "add rate limiting"
+
+3. **Iterate**
+
+   Start with a simple request, then refine. "Add a function" → "Make it async" → "Add error handling"
+
+4. **Review changes**
+
+   kicode shows you what it changed. Review the output before moving on.
+
+5. **Use for exploration**
+
+   Ask "how does X work?" to understand unfamiliar code before modifying it.
+
+</Steps>
+
+## Switching Models
+
+Use a different AI model mid-session or when starting:
+
+```bash
+# Start with a specific model
+kicode --model anthropic/claude-3.5-sonnet
+
+# Or set an environment variable
+export KICODE_MODEL="openai/gpt-4-turbo"
+kicode
+```
+
+## What's Next?
+
+Now that you know the basics:
+
+- Explore the [Tools Reference](/tools) to see all available capabilities
+- Learn about [Safety Features](/reference/safety) to understand how kicode protects you
+- Check [Models Reference](/reference/models) to choose the best model for your needs
