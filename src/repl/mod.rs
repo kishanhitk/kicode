@@ -7,24 +7,103 @@ use crate::conversation::Conversation;
 use crate::safety::analyzer::SafetyAnalyzer;
 use crate::tools::ToolRegistry;
 use anyhow::Result;
+use colored::Colorize;
+use crossterm::cursor;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-use crossterm::terminal;
+use crossterm::terminal::{self, Clear, ClearType};
 use std::io::{self, BufRead, Write};
 
 /// Result of reading user input
 enum InputResult {
     /// User typed a line of text and pressed Enter
     Line(String),
-    /// User pressed "/" as first character - show command menu
-    CommandMenu,
+    /// User selected a slash command from the menu
+    Command(String),
     /// User pressed Ctrl+C or Ctrl+D - exit
     Exit,
 }
 
-/// Read user input character by character.
-/// Returns immediately with CommandMenu if "/" is pressed on empty input.
+/// Get commands that match the current input query
+fn get_matching_commands(buffer: &str) -> Vec<(&'static str, &'static str)> {
+    let query = buffer.strip_prefix('/').unwrap_or("");
+    commands::COMMANDS
+        .iter()
+        .filter(|(name, _)| name.starts_with(query))
+        .copied()
+        .collect()
+}
+
+/// Render the command suggestions overlay below the input line
+fn render_command_suggestions(buffer: &str, selected_idx: usize) -> io::Result<()> {
+    let query = buffer.strip_prefix('/').unwrap_or("");
+    let matches = get_matching_commands(buffer);
+
+    // Save cursor position and move down
+    crossterm::execute!(io::stdout(), cursor::SavePosition)?;
+
+    for (name, desc) in commands::COMMANDS.iter() {
+        crossterm::execute!(
+            io::stdout(),
+            cursor::MoveToNextLine(1),
+            Clear(ClearType::CurrentLine)
+        )?;
+
+        let is_match = name.starts_with(query);
+
+        if is_match {
+            // Find position in matches list
+            let match_idx = matches.iter().position(|(n, _)| *n == *name);
+            let is_selected = match_idx == Some(selected_idx);
+            let prefix = if is_selected { "▸" } else { " " };
+
+            if is_selected {
+                // Highlighted: green and bold
+                print!(
+                    "  {} /{} - {}",
+                    prefix.green(),
+                    name.green().bold(),
+                    desc.green()
+                );
+            } else {
+                // Matching but not selected
+                print!("  {} /{} - {}", prefix, name.cyan(), desc);
+            }
+        } else {
+            // Non-matching: dimmed
+            print!("    /{} - {}", name.dimmed(), desc.dimmed());
+        }
+    }
+
+    // Restore cursor position
+    crossterm::execute!(io::stdout(), cursor::RestorePosition)?;
+    io::stdout().flush()?;
+
+    Ok(())
+}
+
+/// Clear the command suggestions overlay
+fn clear_command_suggestions() -> io::Result<()> {
+    crossterm::execute!(io::stdout(), cursor::SavePosition)?;
+
+    for _ in commands::COMMANDS.iter() {
+        crossterm::execute!(
+            io::stdout(),
+            cursor::MoveToNextLine(1),
+            Clear(ClearType::CurrentLine)
+        )?;
+    }
+
+    crossterm::execute!(io::stdout(), cursor::RestorePosition)?;
+    io::stdout().flush()?;
+
+    Ok(())
+}
+
+/// Read user input character by character with inline command filtering.
+/// When input starts with '/', shows filtered command suggestions below the input.
 fn read_input() -> io::Result<InputResult> {
     let mut buffer = String::new();
+    let mut selected_idx: usize = 0;
 
     terminal::enable_raw_mode()?;
 
@@ -38,42 +117,98 @@ fn read_input() -> io::Result<InputResult> {
                     // Ctrl+C or Ctrl+D -> exit
                     (KeyCode::Char('c'), KeyModifiers::CONTROL)
                     | (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                        if buffer.starts_with('/') {
+                            clear_command_suggestions()?;
+                        }
                         println!();
                         break InputResult::Exit;
                     }
-                    // Enter -> submit line
+
+                    // Enter -> submit line or select command
                     (KeyCode::Enter, _) => {
-                        println!();
-                        break InputResult::Line(buffer);
+                        if buffer.starts_with('/') {
+                            let matches = get_matching_commands(&buffer);
+                            clear_command_suggestions()?;
+                            println!();
+
+                            if !matches.is_empty() {
+                                // Select the highlighted command
+                                let (name, _) = matches[selected_idx];
+                                break InputResult::Command(name.to_string());
+                            } else {
+                                // No matches - send as regular input to AI
+                                break InputResult::Line(buffer);
+                            }
+                        } else {
+                            println!();
+                            break InputResult::Line(buffer);
+                        }
                     }
-                    // "/" on empty input -> command menu
-                    (KeyCode::Char('/'), _) if buffer.is_empty() => {
-                        println!();
-                        break InputResult::CommandMenu;
+
+                    // Up arrow - move selection up (only in command mode)
+                    (KeyCode::Up, _) if buffer.starts_with('/') => {
+                        let matches = get_matching_commands(&buffer);
+                        if !matches.is_empty() && selected_idx > 0 {
+                            selected_idx -= 1;
+                            render_command_suggestions(&buffer, selected_idx)?;
+                        }
                     }
+
+                    // Down arrow - move selection down (only in command mode)
+                    (KeyCode::Down, _) if buffer.starts_with('/') => {
+                        let matches = get_matching_commands(&buffer);
+                        if selected_idx + 1 < matches.len() {
+                            selected_idx += 1;
+                            render_command_suggestions(&buffer, selected_idx)?;
+                        }
+                    }
+
                     // Regular character
                     (KeyCode::Char(c), _) => {
                         buffer.push(c);
                         print!("{}", c);
                         io::stdout().flush()?;
+
+                        // If in command mode, reset selection and re-render
+                        if buffer.starts_with('/') {
+                            selected_idx = 0; // Reset to first match
+                            render_command_suggestions(&buffer, selected_idx)?;
+                        }
                     }
+
                     // Backspace
                     (KeyCode::Backspace, _) => {
+                        let was_command_mode = buffer.starts_with('/');
                         if buffer.pop().is_some() {
                             // Move cursor back, overwrite with space, move back again
                             print!("\x08 \x08");
                             io::stdout().flush()?;
+
+                            if buffer.starts_with('/') {
+                                // Still in command mode - update suggestions
+                                selected_idx = 0;
+                                render_command_suggestions(&buffer, selected_idx)?;
+                            } else if was_command_mode {
+                                // Exited command mode - clear suggestions
+                                clear_command_suggestions()?;
+                            }
                         }
                     }
-                    // Escape -> clear line
+
+                    // Escape -> clear line and suggestions
                     (KeyCode::Esc, _) => {
+                        if buffer.starts_with('/') {
+                            clear_command_suggestions()?;
+                        }
                         // Clear the current line
                         for _ in 0..buffer.len() {
                             print!("\x08 \x08");
                         }
                         io::stdout().flush()?;
                         buffer.clear();
+                        selected_idx = 0;
                     }
+
                     _ => {}
                 }
             }
@@ -116,18 +251,10 @@ impl Repl {
                     output::print_info("Goodbye!");
                     break;
                 }
-                Ok(InputResult::CommandMenu) => {
-                    // "/" pressed on empty input -> show command menu immediately
-                    let cmd =
-                        tokio::task::spawn_blocking(|| commands::show_command_menu()).await;
-                    match cmd {
-                        Ok(Some(cmd)) => {
-                            if self.execute_command(&cmd).await {
-                                break;
-                            }
-                        }
-                        Ok(None) => {} // Cancelled
-                        Err(e) => output::print_error(&format!("Command menu failed: {}", e)),
+                Ok(InputResult::Command(cmd)) => {
+                    // User selected a command from the inline menu
+                    if self.execute_command(&cmd).await {
+                        break;
                     }
                 }
                 Ok(InputResult::Line(line)) => {
@@ -138,10 +265,17 @@ impl Repl {
 
                     // Handle slash commands (e.g., "/help", "/model")
                     if let Some(cmd) = line.strip_prefix('/') {
-                        if self.execute_command(cmd).await {
-                            break;
+                        // Only treat as command if it matches a known command
+                        let cmd_name = cmd.split_whitespace().next().unwrap_or("");
+                        if commands::COMMANDS.iter().any(|(name, _)| *name == cmd_name)
+                            || cmd_name == "quit"
+                        {
+                            if self.execute_command(cmd).await {
+                                break;
+                            }
+                            continue;
                         }
-                        continue;
+                        // Not a known command - fall through to process_message
                     }
 
                     // Regular message
@@ -306,10 +440,9 @@ impl Repl {
         let current_model = self.client.model().to_string();
 
         // Run the selection in a blocking context (reads from stdin)
-        let selection = tokio::task::spawn_blocking(move || {
-            commands::model::show_model_menu(current_model)
-        })
-        .await;
+        let selection =
+            tokio::task::spawn_blocking(move || commands::model::show_model_menu(current_model))
+                .await;
 
         let selection = match selection {
             Ok(s) => s,
