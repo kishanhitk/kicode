@@ -9,7 +9,7 @@ AI-powered coding assistant that runs in your terminal.
 ### Quick Install (macOS & Linux)
 
 ```bash
-curl -fsSL https://kicode.kishans.in/install.sh | sh
+curl -fsSL https://kicode.kishans.in/install | sh
 ```
 
 ### Using Cargo

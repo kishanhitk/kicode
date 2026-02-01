@@ -299,8 +299,9 @@
         inputLine.style.opacity = '1';
         
         // Focus input after a small delay to ensure visibility
+        // Use preventScroll to avoid scrolling the whole page on mobile
         setTimeout(() => {
-            input.focus();
+            input.focus({ preventScroll: true });
         }, 100);
 
         // Handle input
@@ -357,7 +358,7 @@
         // Focus input when clicking anywhere in terminal
         document.getElementById('terminal-demo').addEventListener('click', (e) => {
             if (e.target.tagName !== 'INPUT') {
-                input.focus();
+                input.focus({ preventScroll: true });
             }
         });
     }
@@ -678,7 +679,7 @@
         transform: translateY(0);
     }
 
-    /* Responsive adjustments */
+    /* Responsive adjustments - Mobile */
     @media (max-width: 640px) {
         .terminal-content {
             padding: 16px;
@@ -693,6 +694,32 @@
 
         .terminal-title {
             font-size: 11px;
+        }
+    }
+
+    /* Tablet sizing */
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .terminal-content {
+            padding: 20px;
+            font-size: 13px;
+            height: 460px;
+        }
+    }
+
+    /* Very small phones (iPhone SE, etc.) */
+    @media (max-width: 375px) {
+        .terminal-content {
+            padding: 12px;
+            font-size: 11px;
+            height: 400px;
+        }
+
+        .terminal-header {
+            padding: 8px 10px;
+        }
+
+        .terminal-title {
+            font-size: 10px;
         }
     }
 </style>

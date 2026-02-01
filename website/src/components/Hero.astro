@@ -1,7 +1,7 @@
 <section
-  class="relative flex flex-col items-center justify-center px-4 py-32 overflow-hidden bg-bg-primary"
+  class="relative flex flex-col items-center justify-center px-4 py-16 sm:py-24 md:py-32 overflow-x-hidden bg-bg-primary w-full max-w-full"
 >
-  <div class="relative z-10 max-w-5xl mx-auto text-center">
+  <div class="relative z-10 max-w-5xl w-full mx-auto text-center">
     <!-- Logo/Brand -->
     <div class="mb-6 animate-fade-in">
       <div
@@ -12,7 +12,7 @@
         >
       </div>
       <h1
-        class="text-5xl md:text-8xl font-bold text-text-primary tracking-tight mb-6 font-mono"
+        class="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-text-primary tracking-tight mb-6 font-mono"
       >
         <span class="text-accent-green">></span>kicode<span
           class="text-accent-blue">_</span
@@ -22,7 +22,7 @@
 
     <!-- Tagline -->
     <p
-      class="text-xl md:text-2xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up"
+      class="text-lg sm:text-xl md:text-2xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up"
       style="animation-delay: 0.1s"
     >
       The open source AI coding agent. <br />
@@ -31,7 +31,7 @@
 
     <!-- Install Command slot -->
     <div
-      class="mb-12 animate-slide-up bg-bg-surface p-2 rounded-lg border border-border-default inline-block"
+      class="mb-12 animate-slide-up w-full max-w-2xl mx-auto"
       style="animation-delay: 0.2s"
     >
       <slot name="install-command" />
