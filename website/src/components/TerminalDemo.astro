@@ -2,7 +2,7 @@
 // Terminal Demo Component - Shows actual kicode chat interface
 ---
 
-<div class="terminal-container">
+<div class="terminal-container" id="terminal-demo">
     <div class="terminal-window">
         <!-- Terminal Header (macOS style) -->
         <div class="terminal-header">
@@ -16,7 +16,7 @@
         </div>
 
         <!-- Terminal Content -->
-        <div class="terminal-content">
+        <div class="terminal-content" id="terminal-content">
             <!-- Welcome Banner (static) -->
             <div class="terminal-line line-1 static-line">
                 <span class="text-cyan-terminal">Welcome to Kicode!</span>
@@ -31,52 +31,59 @@
             <div class="terminal-line animated-line line-3">
             </div>
 
-            <!-- User message -->
+            <!-- Demo: User message -->
             <div class="terminal-line animated-line line-4">
                 <span class="terminal-prompt">>></span>
                 <span class="typing-text" data-content="Help me add a dark mode toggle to my React app"></span>
             </div>
 
-            <!-- AI Response -->
+            <!-- Demo: AI Response -->
             <div class="terminal-line animated-line line-5 ai-line" data-content="I'll help you add a dark mode toggle. Let me first check your project structure." data-type="cyan">
             </div>
 
-            <!-- Tool: read_file -->
+            <!-- Demo: Tool: read_file -->
             <div class="terminal-line animated-line line-6 tool-line" data-content="→ Reading src/App.tsx" data-type="muted">
             </div>
 
-            <!-- Tool: glob_search -->
+            <!-- Demo: Tool: glob_search -->
             <div class="terminal-line animated-line line-7 tool-line" data-content="→ Searching for existing theme files..." data-type="muted">
             </div>
 
-            <!-- AI Response -->
+            <!-- Demo: AI Response -->
             <div class="terminal-line animated-line line-8 ai-line" data-content="Perfect! I can see you're using a standard React setup. I'll create a theme system for you." data-type="cyan">
             </div>
 
-            <!-- Tool: write_file -->
+            <!-- Demo: Tool: write_file -->
             <div class="terminal-line animated-line line-9 tool-line" data-content="✓ Created src/context/ThemeContext.tsx" data-type="checkmark">
             </div>
 
-            <!-- Tool: write_file -->
+            <!-- Demo: Tool: write_file -->
             <div class="terminal-line animated-line line-10 tool-line" data-content="✓ Created src/components/ThemeToggle.tsx" data-type="checkmark">
             </div>
 
-            <!-- Tool: edit_file -->
+            <!-- Demo: Tool: edit_file -->
             <div class="terminal-line animated-line line-11 tool-line" data-content="✓ Updated src/App.tsx with theme provider" data-type="checkmark">
             </div>
 
-            <!-- Tool: edit_file -->
+            <!-- Demo: Tool: edit_file -->
             <div class="terminal-line animated-line line-12 tool-line" data-content="✓ Added CSS variables to src/index.css" data-type="checkmark">
             </div>
 
-            <!-- Summary -->
+            <!-- Demo: Summary -->
             <div class="terminal-line animated-line line-13 ai-line" data-content="Done! I've set up a complete dark mode system. The toggle button is now in your header. Try clicking it!" data-type="cyan">
             </div>
 
-            <!-- Final prompt with cursor -->
-            <div class="terminal-line animated-line line-14">
+            <!-- Interactive input line (shown after demo) -->
+            <div class="terminal-line input-line" id="input-line" style="opacity: 0;">
                 <span class="terminal-prompt">>></span>
-                <span class="cursor-blink">▌</span>
+                <input 
+                    type="text" 
+                    class="terminal-input" 
+                    id="terminal-input"
+                    placeholder="Type a message..."
+                    autocomplete="off"
+                    spellcheck="false"
+                />
             </div>
         </div>
     </div>
@@ -86,73 +93,73 @@
     // ============================================
     // TERMINAL ANIMATION CONFIGURATION
     // ============================================
-    // Toggle these values to adjust animation timing
-
+    
     const CONFIG = {
-        // Initial welcome sequence
         welcome: {
-            line1: 300,   // "Welcome to Kicode!"
-            line2: 900,   // "Type /help..."
-            line3: 1500,  // Empty line
+            line1: 300,
+            line2: 900,
+            line3: 1500,
         },
-
-        // User input
         userInput: 1100,
-
-        // Gap after user input before AI responds
         aiResponseDelay: 900,
-
-        // Gaps between different message types
         gaps: {
-            aiToTool: 500,      // Gap between AI message and tool calls
-            toolToTool: 600,    // Gap between consecutive tool calls
-            toolToAi: 700,      // Gap between tool calls and AI response
+            aiToTool: 500,
+            toolToTool: 600,
+            toolToAi: 700,
         },
-
-        // Typing speeds (ms per character)
         typingSpeed: {
-            user: 20,      // User input typing speed
-            ai: 10,        // AI message typing speed
-            tool: 10,      // Tool message typing speed
+            user: 20,
+            ai: 10,
+            tool: 10,
         },
-
-        // Final cursor appears after last message + this delay
         cursorDelay: 500,
     };
 
     // ============================================
-    // CALCULATED DELAYS (derived from CONFIG)
+    // MOCK AI RESPONSES
     // ============================================
-
-    const TIMING = {
-        // User message appears
-        line4: CONFIG.userInput,
-
-        // First AI response (after user types + aiResponseDelay)
-        line5: CONFIG.userInput + (47 * CONFIG.typingSpeed.user) + CONFIG.aiResponseDelay,
-
-        // First tool calls (after AI + aiToTool gap)
-        line6: 0, // calculated below
-        line7: 0, // calculated below
-
-        // Second AI response (after tools + toolToAi gap)
-        line8: 0, // calculated below
-
-        // Second batch of tool calls
-        line9: 0,  // calculated below
-        line10: 0, // calculated below
-        line11: 0, // calculated below
-        line12: 0, // calculated below
-
-        // Final AI summary
-        line13: 0, // calculated below
-
-        // Final cursor
-        line14: 0, // calculated below
+    
+    const MOCK_RESPONSES = {
+        '/help': [
+            { type: 'ai', content: 'Available commands:' },
+            { type: 'tool', content: '  /help     - Show this help message' },
+            { type: 'tool', content: '  /clear    - Clear the terminal' },
+            { type: 'tool', content: '  /models   - List available AI models' },
+            { type: 'tool', content: '  /version  - Show version info' },
+            { type: 'ai', content: 'Or just type any coding question and I\'ll help you out!' },
+        ],
+        '/models': [
+            { type: 'ai', content: 'Available AI models via OpenRouter:' },
+            { type: 'tool', content: '  • Claude 3.5 Sonnet (anthropic/claude-3.5-sonnet)' },
+            { type: 'tool', content: '  • GPT-4o (openai/gpt-4o)' },
+            { type: 'tool', content: '  • Grok 2 (x-ai/grok-2)' },
+            { type: 'tool', content: '  • DeepSeek V3 (deepseek/deepseek-chat)' },
+            { type: 'ai', content: 'Use -m <model> to switch models. Default is Claude 3.5 Sonnet.' },
+        ],
+        '/version': [
+            { type: 'ai', content: 'kicode v0.1.0' },
+            { type: 'tool', content: 'Built with Rust 🦀' },
+            { type: 'tool', content: 'Powered by OpenRouter' },
+        ],
+        'default': [
+            { type: 'ai', content: 'That\'s an interesting question! In the real kicode CLI, I would:' },
+            { type: 'tool', content: '→ Analyze your project structure' },
+            { type: 'tool', content: '→ Read relevant files' },
+            { type: 'tool', content: '→ Provide specific code suggestions' },
+            { type: 'ai', content: 'Try typing "/help" to see available commands, or download kicode to try it for real!' },
+        ],
     };
 
-    // Calculate tool call timings based on gaps
-    const ai1End = TIMING.line5 + (70 * CONFIG.typingSpeed.ai); // approx char count
+    // ============================================
+    // CALCULATED TIMING
+    // ============================================
+    
+    const TIMING = {
+        line4: CONFIG.userInput,
+        line5: CONFIG.userInput + (47 * CONFIG.typingSpeed.user) + CONFIG.aiResponseDelay,
+    };
+
+    const ai1End = TIMING.line5 + (70 * CONFIG.typingSpeed.ai);
     TIMING.line6 = ai1End + CONFIG.gaps.aiToTool;
     TIMING.line7 = TIMING.line6 + CONFIG.gaps.toolToTool;
 
@@ -172,9 +179,9 @@
     TIMING.line14 = summaryEnd + CONFIG.cursorDelay;
 
     // ============================================
-    // ANIMATION FUNCTIONS
+    // UTILITY FUNCTIONS
     // ============================================
-
+    
     function typeLine(element, text, speed = CONFIG.typingSpeed.ai) {
         return new Promise((resolve) => {
             let i = 0;
@@ -194,13 +201,121 @@
         });
     }
 
+    function createLine(content, type = 'text') {
+        const line = document.createElement('div');
+        line.className = 'terminal-line interactive-line';
+        line.style.opacity = '0';
+        line.style.transform = 'translateY(4px)';
+        line.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        
+        if (type === 'user') {
+            line.innerHTML = `<span class="terminal-prompt">>></span><span class="text-terminal">${escapeHtml(content)}</span>`;
+        } else if (type === 'ai') {
+            line.innerHTML = `<span class="text-cyan-terminal">${escapeHtml(content)}</span>`;
+        } else if (type === 'tool') {
+            line.innerHTML = `<span class="text-muted-terminal">${escapeHtml(content)}</span>`;
+        }
+        
+        return line;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function scrollToBottom() {
+        const content = document.getElementById('terminal-content');
+        if (content) {
+            content.scrollTop = content.scrollHeight;
+        }
+    }
+
+    // ============================================
+    // INTERACTIVE TERMINAL
+    // ============================================
+    
+    let isInteractive = false;
+
+    function initInteractiveTerminal() {
+        const input = document.getElementById('terminal-input');
+        const inputLine = document.getElementById('input-line');
+        const content = document.getElementById('terminal-content');
+        
+        if (!input || !inputLine || !content) return;
+        
+        isInteractive = true;
+        
+        // Show input line
+        inputLine.style.opacity = '1';
+        input.focus();
+        
+        // Handle input
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const message = input.value.trim();
+                if (!message) return;
+                
+                // Add user message
+                const userLine = createLine(message, 'user');
+                content.insertBefore(userLine, inputLine);
+                
+                // Animate user line
+                requestAnimationFrame(() => {
+                    userLine.style.opacity = '1';
+                    userLine.style.transform = 'translateY(0)';
+                });
+                
+                input.value = '';
+                scrollToBottom();
+                
+                // Handle commands
+                if (message === '/clear') {
+                    // Remove all interactive lines
+                    const interactiveLines = content.querySelectorAll('.interactive-line');
+                    interactiveLines.forEach(line => line.remove());
+                    return;
+                }
+                
+                // Get response
+                const responses = MOCK_RESPONSES[message.toLowerCase()] || MOCK_RESPONSES['default'];
+                
+                // Show typing indicator briefly
+                await new Promise(r => setTimeout(r, 300));
+                
+                // Add responses with delay
+                for (const response of responses) {
+                    await new Promise(r => setTimeout(r, 200));
+                    const line = createLine(response.content, response.type);
+                    content.insertBefore(line, inputLine);
+                    
+                    requestAnimationFrame(() => {
+                        line.style.opacity = '1';
+                        line.style.transform = 'translateY(0)';
+                    });
+                    
+                    scrollToBottom();
+                }
+                
+                scrollToBottom();
+            }
+        });
+        
+        // Focus input when clicking anywhere in terminal
+        document.getElementById('terminal-demo').addEventListener('click', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                input.focus();
+            }
+        });
+    }
+
     // ============================================
     // MAIN ANIMATION SEQUENCE
     // ============================================
-
+    
     document.addEventListener('DOMContentLoaded', () => {
         const lines = [
-            // Note: line-1 and line-2 are static (welcome message)
             { selector: '.line-3', delay: CONFIG.welcome.line3 },
             { selector: '.line-5', delay: TIMING.line5 },
             { selector: '.line-6', delay: TIMING.line6 },
@@ -243,16 +358,12 @@
             }, delay);
         });
 
-        // Line 14 (final cursor) fades in after all animations complete
+        // Initialize interactive terminal after demo completes
         setTimeout(() => {
-            const line14 = document.querySelector('.line-14');
-            if (line14) {
-                line14.style.transition = 'opacity 0.3s ease';
-                line14.style.opacity = '1';
-            }
+            initInteractiveTerminal();
         }, TIMING.line14);
 
-        // Handle line-4 (user input) separately with typing effect
+        // Handle demo user input (line-4)
         const line4 = document.querySelector('.line-4 .typing-text');
         if (line4) {
             const userText = line4.dataset.content;
@@ -366,10 +477,25 @@
         height: 480px;
         text-align: left;
         background: var(--terminal-bg);
-        /* Fixed dimensions */
         width: 100%;
         box-sizing: border-box;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: var(--terminal-border) transparent;
+    }
+
+    .terminal-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .terminal-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .terminal-content::-webkit-scrollbar-thumb {
+        background: var(--terminal-border);
+        border-radius: 4px;
     }
 
     .terminal-line {
@@ -436,17 +562,48 @@
         word-break: break-all;
     }
 
-    .cursor-blink {
-        animation: blink 1s step-end infinite;
-        color: var(--terminal-green);
+    /* Input line */
+    .input-line {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        margin-top: 8px;
     }
 
-    @keyframes blink {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
+    .terminal-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--terminal-text);
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        margin: 0;
+        caret-color: var(--terminal-green);
+    }
+
+    .terminal-input::placeholder {
+        color: var(--terminal-text-muted);
+        opacity: 0.5;
+    }
+
+    /* Interactive lines (user messages) */
+    .interactive-line {
+        opacity: 1;
+        transform: translateY(0);
+        animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
             opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
@@ -454,11 +611,6 @@
     .line-4 {
         opacity: 1;
         transform: translateY(0);
-    }
-
-    /* Line 14 - cursor blinks only after animation completes */
-    .line-14 {
-        opacity: 0;
     }
 
     /* Responsive adjustments */
@@ -476,10 +628,6 @@
 
         .terminal-title {
             font-size: 11px;
-        }
-
-        .ai-bullet {
-            padding-left: 12px;
         }
     }
 </style>
