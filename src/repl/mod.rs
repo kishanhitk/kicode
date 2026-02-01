@@ -33,44 +33,41 @@ fn get_matching_commands(buffer: &str) -> Vec<(&'static str, &'static str)> {
         .collect()
 }
 
-/// Render the command suggestions overlay below the input line
+/// Render the command suggestions overlay below the input line.
+/// Only shows commands that match the current filter (no dimmed non-matches).
 fn render_command_suggestions(buffer: &str, selected_idx: usize) -> io::Result<()> {
-    let query = buffer.strip_prefix('/').unwrap_or("");
     let matches = get_matching_commands(buffer);
+
+    // If no matches, don't show anything
+    if matches.is_empty() {
+        return Ok(());
+    }
 
     // Save cursor position and move down
     crossterm::execute!(io::stdout(), cursor::SavePosition)?;
 
-    for (name, desc) in commands::COMMANDS.iter() {
+    // Only render matching commands
+    for (idx, (name, desc)) in matches.iter().enumerate() {
         crossterm::execute!(
             io::stdout(),
             cursor::MoveToNextLine(1),
             Clear(ClearType::CurrentLine)
         )?;
 
-        let is_match = name.starts_with(query);
+        let is_selected = idx == selected_idx;
+        let prefix = if is_selected { "▸" } else { " " };
 
-        if is_match {
-            // Find position in matches list
-            let match_idx = matches.iter().position(|(n, _)| *n == *name);
-            let is_selected = match_idx == Some(selected_idx);
-            let prefix = if is_selected { "▸" } else { " " };
-
-            if is_selected {
-                // Highlighted: green and bold
-                print!(
-                    "  {} /{} - {}",
-                    prefix.green(),
-                    name.green().bold(),
-                    desc.green()
-                );
-            } else {
-                // Matching but not selected
-                print!("  {} /{} - {}", prefix, name.cyan(), desc);
-            }
+        if is_selected {
+            // Highlighted: green and bold
+            print!(
+                "  {} /{} - {}",
+                prefix.green(),
+                name.green().bold(),
+                desc.green()
+            );
         } else {
-            // Non-matching: dimmed
-            print!("    /{} - {}", name.dimmed(), desc.dimmed());
+            // Matching but not selected
+            print!("  {} /{} - {}", prefix, name.cyan(), desc);
         }
     }
 
@@ -81,11 +78,12 @@ fn render_command_suggestions(buffer: &str, selected_idx: usize) -> io::Result<(
     Ok(())
 }
 
-/// Clear the command suggestions overlay
-fn clear_command_suggestions() -> io::Result<()> {
+/// Clear the command suggestions overlay.
+/// Takes the number of lines to clear (number of previously shown matches).
+fn clear_command_suggestions(num_lines: usize) -> io::Result<()> {
     crossterm::execute!(io::stdout(), cursor::SavePosition)?;
 
-    for _ in commands::COMMANDS.iter() {
+    for _ in 0..num_lines {
         crossterm::execute!(
             io::stdout(),
             cursor::MoveToNextLine(1),
@@ -104,6 +102,7 @@ fn clear_command_suggestions() -> io::Result<()> {
 fn read_input() -> io::Result<InputResult> {
     let mut buffer = String::new();
     let mut selected_idx: usize = 0;
+    let mut prev_match_count: usize = 0; // Track how many lines were rendered
 
     terminal::enable_raw_mode()?;
 
@@ -118,7 +117,7 @@ fn read_input() -> io::Result<InputResult> {
                     (KeyCode::Char('c'), KeyModifiers::CONTROL)
                     | (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
                         if buffer.starts_with('/') {
-                            clear_command_suggestions()?;
+                            clear_command_suggestions(prev_match_count)?;
                         }
                         println!();
                         break InputResult::Exit;
@@ -128,15 +127,26 @@ fn read_input() -> io::Result<InputResult> {
                     (KeyCode::Enter, _) => {
                         if buffer.starts_with('/') {
                             let matches = get_matching_commands(&buffer);
-                            clear_command_suggestions()?;
-                            println!();
+                            clear_command_suggestions(prev_match_count)?;
 
                             if !matches.is_empty() {
                                 // Select the highlighted command
                                 let (name, _) = matches[selected_idx];
+
+                                // Update display to show full command before executing
+                                let partial_len = buffer.len();
+                                for _ in 0..partial_len {
+                                    print!("\x08 \x08");
+                                }
+                                let full_cmd = format!("/{}", name);
+                                print!("{}", full_cmd);
+                                io::stdout().flush()?;
+
+                                println!();
                                 break InputResult::Command(name.to_string());
                             } else {
                                 // No matches - send as regular input to AI
+                                println!();
                                 break InputResult::Line(buffer);
                             }
                         } else {
@@ -150,7 +160,9 @@ fn read_input() -> io::Result<InputResult> {
                         let matches = get_matching_commands(&buffer);
                         if !matches.is_empty() && selected_idx > 0 {
                             selected_idx -= 1;
+                            clear_command_suggestions(prev_match_count)?;
                             render_command_suggestions(&buffer, selected_idx)?;
+                            prev_match_count = matches.len();
                         }
                     }
 
@@ -159,7 +171,9 @@ fn read_input() -> io::Result<InputResult> {
                         let matches = get_matching_commands(&buffer);
                         if selected_idx + 1 < matches.len() {
                             selected_idx += 1;
+                            clear_command_suggestions(prev_match_count)?;
                             render_command_suggestions(&buffer, selected_idx)?;
+                            prev_match_count = matches.len();
                         }
                     }
 
@@ -172,6 +186,9 @@ fn read_input() -> io::Result<InputResult> {
                         // If in command mode, reset selection and re-render
                         if buffer.starts_with('/') {
                             selected_idx = 0; // Reset to first match
+                            clear_command_suggestions(prev_match_count)?;
+                            let matches = get_matching_commands(&buffer);
+                            prev_match_count = matches.len();
                             render_command_suggestions(&buffer, selected_idx)?;
                         }
                     }
@@ -187,10 +204,14 @@ fn read_input() -> io::Result<InputResult> {
                             if buffer.starts_with('/') {
                                 // Still in command mode - update suggestions
                                 selected_idx = 0;
+                                clear_command_suggestions(prev_match_count)?;
+                                let matches = get_matching_commands(&buffer);
+                                prev_match_count = matches.len();
                                 render_command_suggestions(&buffer, selected_idx)?;
                             } else if was_command_mode {
                                 // Exited command mode - clear suggestions
-                                clear_command_suggestions()?;
+                                clear_command_suggestions(prev_match_count)?;
+                                prev_match_count = 0;
                             }
                         }
                     }
@@ -198,7 +219,8 @@ fn read_input() -> io::Result<InputResult> {
                     // Escape -> clear line and suggestions
                     (KeyCode::Esc, _) => {
                         if buffer.starts_with('/') {
-                            clear_command_suggestions()?;
+                            clear_command_suggestions(prev_match_count)?;
+                            prev_match_count = 0;
                         }
                         // Clear the current line
                         for _ in 0..buffer.len() {
