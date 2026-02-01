@@ -8,14 +8,14 @@ use dialoguer::{theme::ColorfulTheme, FuzzySelect};
 /// Curated list of popular coding-focused models: (id, display_name)
 const POPULAR_MODELS: &[(&str, &str)] = &[
     ("x-ai/grok-code-fast-1", "Grok Code Fast 1 (Default)"),
+    ("moonshotai/kimi-k2.5", "Kimi K2.5"),
     ("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5"),
-    ("minimax/minimax-m2", "MiniMax M2"),
+    ("minimax/minimax-m2.1", "MiniMax M2.1"),
     ("anthropic/claude-opus-4.5", "Claude Opus 4.5"),
-    ("openai/gpt-oss-120b", "GPT-OSS-120B"),
-    ("google/gemini-3-pro-preview", "Gemini 3 Pro Preview"),
-    ("kwaipilot/kat-coder-pro", "KAT-Coder-Pro V1"),
-    ("qwen/qwen3-coder", "Qwen3 Coder 480B A35B"),
-    ("anthropic/claude-sonnet-4", "Claude Sonnet 4"),
+    ("google/gemini-3-flash-preview", "Gemini 3 Flash Preview"),
+    ("z-ai/glm-4.7", "GLM 4.7"),
+    ("openai/gpt-5.2", "GPT-5.2"),
+    ("openai/gpt-5.2-codex", "GPT-5.2-Codex"),
 ];
 
 /// Handles the /model command - interactive model selection
