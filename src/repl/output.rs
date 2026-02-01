@@ -72,7 +72,9 @@ pub fn print_help() {
 {}
 
 {}
+  {}       - Show command menu (arrow-key navigation)
   {}    - Show this help
+  {}   - Change AI model
   {}   - Clear conversation history
   {}    - Exit the program
 
@@ -83,7 +85,9 @@ pub fn print_help() {
 "#,
         "Kicode - AI Coding Assistant".cyan().bold(),
         "Commands:".yellow(),
+        "/".green(),
         "/help".green(),
+        "/model".green(),
         "/clear".green(),
         "/exit".green(),
         "Usage:".yellow()
