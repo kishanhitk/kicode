@@ -1,5 +1,5 @@
 ---
-// Terminal Demo Component - Shows actual kicode chat interface
+// Terminal Demo Component - Shows gita-gpt rate limiting implementation
 ---
 
 <div class="terminal-container" id="terminal-demo">
@@ -11,7 +11,7 @@
                 <span class="terminal-button terminal-button-yellow"></span>
                 <span class="terminal-button terminal-button-green"></span>
             </div>
-            <div class="terminal-title">kicode</div>
+            <div class="terminal-title">kicode - gita-gpt</div>
             <div class="terminal-header-spacer"></div>
         </div>
 
@@ -34,43 +34,71 @@
             <!-- Demo: User message -->
             <div class="terminal-line animated-line line-4">
                 <span class="terminal-prompt">>></span>
-                <span class="typing-text" data-content="Help me add a dark mode toggle to my React app"></span>
+                <span class="typing-text" data-content="Add rate limiting to allow 15 messages/day on free tier. Show donate banner when limit hit."></span>
             </div>
 
             <!-- Demo: AI Response -->
-            <div class="terminal-line animated-line line-5 ai-line" data-content="I'll help you add a dark mode toggle. Let me first check your project structure." data-type="cyan">
+            <div class="terminal-line animated-line line-5 ai-line" data-content="I'll implement rate limiting for gita-gpt. This will involve creating a rate limiter, updating the API, and adding a donate banner. Let me start by exploring the project structure." data-type="cyan">
             </div>
 
-            <!-- Demo: Tool: read_file -->
-            <div class="terminal-line animated-line line-6 tool-line" data-content="→ Reading src/App.tsx" data-type="muted">
+            <!-- Demo: Tool: glob_search - find api routes -->
+            <div class="terminal-line animated-line line-6 tool-line" data-content="→ Searching for API routes..." data-type="muted">
             </div>
 
-            <!-- Demo: Tool: glob_search -->
-            <div class="terminal-line animated-line line-7 tool-line" data-content="→ Searching for existing theme files..." data-type="muted">
+            <!-- Demo: Tool: read_file - check app structure -->
+            <div class="terminal-line animated-line line-7 tool-line" data-content="→ Reading app/api/chat/route.ts" data-type="muted">
+            </div>
+
+            <!-- Demo: Tool: read_file - check db schema -->
+            <div class="terminal-line animated-line line-8 tool-line" data-content="→ Reading prisma/schema.prisma" data-type="muted">
             </div>
 
             <!-- Demo: AI Response -->
-            <div class="terminal-line animated-line line-8 ai-line" data-content="Perfect! I can see you're using a standard React setup. I'll create a theme system for you." data-type="cyan">
+            <div class="terminal-line animated-line line-9 ai-line" data-content="I can see this is a Next.js app with Prisma ORM. The chat API is in app/api/chat/route.ts. I need to: 1) Add rate limiting logic, 2) Update the schema to track daily usage, 3) Create a donate banner component, 4) Wire everything together." data-type="cyan">
             </div>
 
-            <!-- Demo: Tool: write_file -->
-            <div class="terminal-line animated-line line-9 tool-line" data-content="✓ Created src/context/ThemeContext.tsx" data-type="checkmark">
+            <!-- Demo: Tool: write_file - rate limiter lib -->
+            <div class="terminal-line animated-line line-10 tool-line" data-content="✓ Created lib/rate-limiter.ts" data-type="checkmark">
             </div>
 
-            <!-- Demo: Tool: write_file -->
-            <div class="terminal-line animated-line line-10 tool-line" data-content="✓ Created src/components/ThemeToggle.tsx" data-type="checkmark">
+            <!-- Demo: Tool: write_file - rate limit check function -->
+            <div class="terminal-line animated-line line-11 tool-line" data-content="✓ Created lib/check-rate-limit.ts" data-type="checkmark">
             </div>
 
-            <!-- Demo: Tool: edit_file -->
-            <div class="terminal-line animated-line line-11 tool-line" data-content="✓ Updated src/App.tsx with theme provider" data-type="checkmark">
+            <!-- Demo: Tool: write_file - donate banner component -->
+            <div class="terminal-line animated-line line-12 tool-line" data-content="✓ Created components/donate-banner.tsx" data-type="checkmark">
             </div>
 
-            <!-- Demo: Tool: edit_file -->
-            <div class="terminal-line animated-line line-12 tool-line" data-content="✓ Added CSS variables to src/index.css" data-type="checkmark">
+            <!-- Demo: Tool: edit_file - update prisma schema -->
+            <div class="terminal-line animated-line line-13 tool-line" data-content="✓ Updated prisma/schema.prisma - added DailyUsage model" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: edit_file - update chat API -->
+            <div class="terminal-line animated-line line-14 tool-line" data-content="✓ Updated app/api/chat/route.ts - added rate limit check" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: edit_file - update chat component -->
+            <div class="terminal-line animated-line line-15 tool-line" data-content="✓ Updated app/chat/page.tsx - integrated donate banner" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: write_file - add types -->
+            <div class="terminal-line animated-line line-16 tool-line" data-content="✓ Created types/rate-limit.ts" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: shell - run prisma migrate -->
+            <div class="terminal-line animated-line line-17 tool-line" data-content="$ npx prisma migrate dev --name add_daily_usage" data-type="muted">
+            </div>
+
+            <!-- Demo: Tool: shell output -->
+            <div class="terminal-line animated-line line-18 tool-line" data-content="  ✔ Generated Prisma Client" data-type="muted">
             </div>
 
             <!-- Demo: Summary -->
-            <div class="terminal-line animated-line line-13 ai-line" data-content="Done! I've set up a complete dark mode system. The toggle button is now in your header. Try clicking it!" data-type="cyan">
+            <div class="terminal-line animated-line line-19 ai-line" data-content="Done! I've implemented the complete rate limiting system. Free tier users get 15 messages per day. When they hit the limit, a donate banner appears with a link to upgrade. The counter resets daily at midnight UTC." data-type="cyan">
+            </div>
+
+            <!-- Demo: AI tips -->
+            <div class="terminal-line animated-line line-20 ai-line" data-content="Don't forget to set RATE_LIMIT_MAX=15 and UPGRADE_URL in your .env file. Run 'npm run db:push' to apply the schema changes to your database." data-type="cyan">
             </div>
 
             <!-- Interactive input line (shown after demo) -->
@@ -104,8 +132,8 @@
         aiResponseDelay: 900,
         gaps: {
             aiToTool: 500,
-            toolToTool: 600,
-            toolToAi: 700,
+            toolToTool: 400,
+            toolToAi: 600,
         },
         typingSpeed: {
             user: 20,
@@ -156,27 +184,43 @@
     
     const TIMING = {
         line4: CONFIG.userInput,
-        line5: CONFIG.userInput + (47 * CONFIG.typingSpeed.user) + CONFIG.aiResponseDelay,
+        line5: CONFIG.userInput + (90 * CONFIG.typingSpeed.user) + CONFIG.aiResponseDelay,
     };
 
-    const ai1End = TIMING.line5 + (70 * CONFIG.typingSpeed.ai);
+    // AI analysis phase
+    const ai1End = TIMING.line5 + (140 * CONFIG.typingSpeed.ai);
     TIMING.line6 = ai1End + CONFIG.gaps.aiToTool;
     TIMING.line7 = TIMING.line6 + CONFIG.gaps.toolToTool;
+    TIMING.line8 = TIMING.line7 + CONFIG.gaps.toolToTool;
 
-    const tool2End = TIMING.line7 + (35 * CONFIG.typingSpeed.tool);
-    TIMING.line8 = tool2End + CONFIG.gaps.toolToAi;
+    // AI planning phase
+    const tool3End = TIMING.line8 + (30 * CONFIG.typingSpeed.tool);
+    TIMING.line9 = tool3End + CONFIG.gaps.toolToAi;
 
-    const ai2End = TIMING.line8 + (80 * CONFIG.typingSpeed.ai);
-    TIMING.line9 = ai2End + CONFIG.gaps.aiToTool;
-    TIMING.line10 = TIMING.line9 + CONFIG.gaps.toolToTool;
+    // File creation phase (batch 1)
+    const ai2End = TIMING.line9 + (180 * CONFIG.typingSpeed.ai);
+    TIMING.line10 = ai2End + CONFIG.gaps.aiToTool;
     TIMING.line11 = TIMING.line10 + CONFIG.gaps.toolToTool;
     TIMING.line12 = TIMING.line11 + CONFIG.gaps.toolToTool;
 
-    const tool4End = TIMING.line12 + (35 * CONFIG.typingSpeed.tool);
-    TIMING.line13 = tool4End + CONFIG.gaps.toolToAi;
+    // File updates phase
+    TIMING.line13 = TIMING.line12 + CONFIG.gaps.toolToTool;
+    TIMING.line14 = TIMING.line13 + CONFIG.gaps.toolToTool;
+    TIMING.line15 = TIMING.line14 + CONFIG.gaps.toolToTool;
+    TIMING.line16 = TIMING.line15 + CONFIG.gaps.toolToTool;
 
-    const summaryEnd = TIMING.line13 + (100 * CONFIG.typingSpeed.ai);
-    TIMING.line14 = summaryEnd + CONFIG.cursorDelay;
+    // Shell command phase
+    const tool9End = TIMING.line16 + (30 * CONFIG.typingSpeed.tool);
+    TIMING.line17 = tool9End + CONFIG.gaps.toolToTool;
+    TIMING.line18 = TIMING.line17 + CONFIG.gaps.toolToTool;
+
+    // Final summary
+    const shellEnd = TIMING.line18 + (30 * CONFIG.typingSpeed.tool);
+    TIMING.line19 = shellEnd + CONFIG.gaps.toolToAi;
+    TIMING.line20 = TIMING.line19 + CONFIG.gaps.toolToAi + 200;
+
+    // Interactive input
+    TIMING.inputLine = TIMING.line20 + (120 * CONFIG.typingSpeed.ai) + CONFIG.cursorDelay;
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -326,6 +370,13 @@
             { selector: '.line-11', delay: TIMING.line11 },
             { selector: '.line-12', delay: TIMING.line12 },
             { selector: '.line-13', delay: TIMING.line13 },
+            { selector: '.line-14', delay: TIMING.line14 },
+            { selector: '.line-15', delay: TIMING.line15 },
+            { selector: '.line-16', delay: TIMING.line16 },
+            { selector: '.line-17', delay: TIMING.line17 },
+            { selector: '.line-18', delay: TIMING.line18 },
+            { selector: '.line-19', delay: TIMING.line19 },
+            { selector: '.line-20', delay: TIMING.line20 },
         ];
 
         lines.forEach(({ selector, delay }) => {
@@ -361,7 +412,7 @@
         // Initialize interactive terminal after demo completes
         setTimeout(() => {
             initInteractiveTerminal();
-        }, TIMING.line14);
+        }, TIMING.inputLine);
 
         // Handle demo user input (line-4)
         const line4 = document.querySelector('.line-4 .typing-text');
