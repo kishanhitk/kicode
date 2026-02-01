@@ -1,4 +1,4 @@
-use crate::api::streaming::{StreamAccumulator, parse_sse_line};
+use crate::api::streaming::{parse_sse_line, StreamAccumulator};
 use crate::api::types::{ChatRequest, ChatResponse, Message, ProviderPreferences, ToolSchema};
 use crate::config::Config;
 use crate::error::{KicodeError, Result};

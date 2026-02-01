@@ -52,7 +52,9 @@ impl Config {
         })
     }
 
-    fn load_file_config() -> Result<FileConfig> {
+    /// Load config from file only (ignores environment variables).
+    /// Useful for setup wizards that need to show/modify file-based config.
+    pub fn load_file_config() -> Result<FileConfig> {
         let config_path = Self::config_path();
 
         if config_path.exists() {

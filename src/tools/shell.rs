@@ -1,6 +1,6 @@
 use super::{Tool, ToolResult};
 use async_trait::async_trait;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::process::Command;
 
 pub struct ShellTool;

@@ -18,10 +18,13 @@ pub async fn run_first_run_setup() -> Result<Config> {
     );
     println!();
 
-    let api_key = prompt_api_key().await?;
-    let model = prompt_model(None).await?;
+    // Load existing file config to preserve non-API settings (e.g., safety patterns)
+    let existing_file_config = Config::load_file_config().unwrap_or_default();
 
-    // Save configuration
+    let api_key = prompt_api_key().await?;
+    let model = prompt_model(existing_file_config.model.as_deref()).await?;
+
+    // Save configuration, preserving existing settings like safety config
     let file_config = FileConfig {
         api_key: Some(api_key.clone()),
         model: if model == Config::default_model() {
@@ -29,7 +32,7 @@ pub async fn run_first_run_setup() -> Result<Config> {
         } else {
             Some(model.clone())
         },
-        ..Default::default()
+        safety: existing_file_config.safety.clone(),
     };
 
     file_config.save()?;
@@ -56,29 +59,39 @@ pub async fn run_setup_command() -> Result<()> {
     println!("{}", "Kicode Setup".bold().cyan());
     println!();
 
-    // Try to load existing config
-    let existing = Config::load(None).ok();
+    // Load existing file config (ignores env vars to show what's actually in the file)
+    let existing = Config::load_file_config().ok();
 
-    if let Some(ref config) = existing {
-        println!("{}", "Current configuration:".dimmed());
-        let masked_key = mask_api_key(&config.api_key);
-        println!("  API Key: {}", masked_key.yellow());
-        println!("  Model:   {}", config.model.green());
-        println!();
+    if let Some(ref file_config) = existing {
+        if file_config.api_key.is_some() || file_config.model.is_some() {
+            println!("{}", "Current configuration (from file):".dimmed());
+            if let Some(ref key) = file_config.api_key {
+                let masked_key = mask_api_key(key);
+                println!("  API Key: {}", masked_key.yellow());
+            }
+            let model_display = file_config
+                .model
+                .as_deref()
+                .unwrap_or(Config::default_model());
+            println!("  Model:   {}", model_display.green());
+            println!();
+        }
     }
 
     // Prompt for new API key
-    let api_key = if existing.is_some() {
-        prompt_api_key_optional(existing.as_ref().map(|c| c.api_key.as_str())).await?
+    let current_key = existing.as_ref().and_then(|c| c.api_key.as_deref());
+    let api_key = if current_key.is_some() {
+        prompt_api_key_optional(current_key).await?
     } else {
         prompt_api_key().await?
     };
 
     // Prompt for model
-    let current_model = existing.as_ref().map(|c| c.model.as_str());
+    let current_model = existing.as_ref().and_then(|c| c.model.as_deref());
     let model = prompt_model(current_model).await?;
 
-    // Save configuration
+    // Save configuration, preserving existing settings like safety config
+    let existing_safety = existing.map(|c| c.safety).unwrap_or_default();
     let file_config = FileConfig {
         api_key: Some(api_key),
         model: if model == Config::default_model() {
@@ -86,7 +99,7 @@ pub async fn run_setup_command() -> Result<()> {
         } else {
             Some(model)
         },
-        ..Default::default()
+        safety: existing_safety,
     };
 
     file_config.save()?;
