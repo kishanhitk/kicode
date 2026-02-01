@@ -227,7 +227,7 @@ impl Repl {
     async fn handle_model_command(&mut self) {
         let current_model = self.client.model().to_string();
 
-        // Run the interactive selection in a blocking context
+        // Run the selection in a blocking context (reads from stdin)
         let selection = tokio::task::spawn_blocking(move || {
             commands::model::show_model_menu(current_model)
         })

@@ -1,6 +1,7 @@
 pub mod model;
 
-use dialoguer::{theme::ColorfulTheme, FuzzySelect};
+use colored::Colorize;
+use std::io::{self, BufRead, Write};
 
 /// Available slash commands with descriptions
 pub const COMMANDS: &[(&str, &str)] = &[
@@ -10,21 +11,36 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("exit", "Exit the program"),
 ];
 
-/// Shows interactive command menu when user types "/"
+/// Shows command menu when user types "/"
 /// Returns the selected command name, or None if cancelled
 pub fn show_command_menu() -> Option<String> {
-    let items: Vec<String> = COMMANDS
-        .iter()
-        .map(|(cmd, desc)| format!("/{:<10} {}", cmd, desc))
-        .collect();
+    println!("\n{}", "Commands".bold());
 
-    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select command")
-        .items(&items)
-        .default(0)
-        .interact_opt()
-        .ok()
-        .flatten();
+    for (i, (cmd, desc)) in COMMANDS.iter().enumerate() {
+        println!("  {}. /{} - {}", i + 1, cmd.green(), desc);
+    }
 
-    selection.map(|i| COMMANDS[i].0.to_string())
+    println!();
+    print!("{}", "Enter number (or 'q' to cancel): ".yellow());
+    io::stdout().flush().ok();
+
+    let stdin = io::stdin();
+    let mut input = String::new();
+    if stdin.lock().read_line(&mut input).is_err() {
+        return None;
+    }
+
+    let input = input.trim();
+
+    if input.eq_ignore_ascii_case("q") || input.is_empty() {
+        return None;
+    }
+
+    match input.parse::<usize>() {
+        Ok(n) if n >= 1 && n <= COMMANDS.len() => Some(COMMANDS[n - 1].0.to_string()),
+        _ => {
+            println!("{}", "Invalid selection".red());
+            None
+        }
+    }
 }

@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::error::Result;
 use colored::Colorize;
-use dialoguer::{theme::ColorfulTheme, FuzzySelect};
+use std::io::{self, BufRead, Write};
 
 /// Curated list of popular coding-focused models: (id, display_name)
 pub const POPULAR_MODELS: &[(&str, &str)] = &[
@@ -28,45 +28,47 @@ pub enum ModelSelection {
     Error(String),
 }
 
-/// Shows interactive model selection menu.
-/// This function uses dialoguer and must be called from a blocking context.
+/// Shows model selection menu.
+/// This function reads from stdin and must be called from a blocking context.
 pub fn show_model_menu(current_model: String) -> ModelSelection {
-    // Build display items, marking current model
-    let items: Vec<String> = POPULAR_MODELS
-        .iter()
-        .map(|(id, name)| {
-            let marker = if *id == current_model { "* " } else { "  " };
-            format!("{}{} ({})", marker, name, id)
-        })
-        .collect();
-
-    // Find current model's index for default selection
-    let default_idx = POPULAR_MODELS
-        .iter()
-        .position(|(id, _)| *id == current_model)
-        .unwrap_or(0);
-
     println!("\n{}", "Model Selection".bold());
     println!("Current: {}\n", current_model.green());
 
-    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select model (type to filter, arrows to navigate)")
-        .items(&items)
-        .default(default_idx)
-        .interact_opt();
+    // Print numbered list
+    for (i, (id, name)) in POPULAR_MODELS.iter().enumerate() {
+        let marker = if *id == current_model { "*" } else { " " };
+        println!("{} {}. {} ({})", marker, i + 1, name.cyan(), id.dimmed());
+    }
 
-    match selection {
-        Ok(Some(idx)) => {
-            let (new_model, name): (&str, &str) = POPULAR_MODELS[idx];
+    println!();
+    print!("{}", "Enter number (or 'q' to cancel): ".yellow());
+    io::stdout().flush().ok();
 
+    // Read user input
+    let stdin = io::stdin();
+    let mut input = String::new();
+    if stdin.lock().read_line(&mut input).is_err() {
+        return ModelSelection::Error("Failed to read input".to_string());
+    }
+
+    let input = input.trim();
+
+    // Handle cancel
+    if input.eq_ignore_ascii_case("q") || input.is_empty() {
+        return ModelSelection::Cancelled;
+    }
+
+    // Parse number
+    match input.parse::<usize>() {
+        Ok(n) if n >= 1 && n <= POPULAR_MODELS.len() => {
+            let (new_model, name) = POPULAR_MODELS[n - 1];
             if new_model == current_model {
                 ModelSelection::AlreadyCurrent
             } else {
                 ModelSelection::Selected(new_model.to_string(), name.to_string())
             }
         }
-        Ok(None) => ModelSelection::Cancelled,
-        Err(e) => ModelSelection::Error(format!("Selection failed: {}", e)),
+        _ => ModelSelection::Error(format!("Invalid selection: {}", input)),
     }
 }
 
