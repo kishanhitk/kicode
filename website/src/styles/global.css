@@ -33,7 +33,7 @@
   --sl-color-black: #0d1117;
 
   --sl-font-system: 'Google Sans', system-ui, -apple-system, sans-serif;
-  --sl-font-system-mono: 'Space Mono', ui-monospace, monospace;
+  --sl-font-system-mono: 'Geist Mono', ui-monospace, monospace;
 
   /* Override background */
   --sl-color-bg: var(--sl-color-black);
@@ -63,7 +63,7 @@
 /* Code blocks styling */
 .expressive-code {
   --ec-codeBg: #121212;
-  --ec-codeFontFamily: 'Space Mono', monospace;
+  --ec-codeFontFamily: 'Geist Mono', monospace;
   --ec-codePadBlock: 1rem;
   --ec-codePadInline: 1.25rem;
   --ec-brdRad: 0.5rem;

@@ -20,7 +20,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Google Sans', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['Space Mono', 'JetBrains Mono', 'ui-monospace', 'monospace'],
+        mono: ['Geist Mono', 'ui-monospace', 'monospace'],
       },
       animation: {
         'typing': 'typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite',
