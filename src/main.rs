@@ -45,6 +45,33 @@ Guidelines:
 
 Remember: You're running in the user's terminal with real file access. Be careful with destructive operations."#;
 
+fn build_system_prompt() -> String {
+    let mut prompt = SYSTEM_PROMPT.to_string();
+    if let Some(instructions) = load_agents_instructions() {
+        let instructions = instructions.trim_end();
+        if !instructions.is_empty() {
+            prompt.push_str("\n\n");
+            prompt.push_str(instructions);
+        }
+    }
+    prompt
+}
+
+fn load_agents_instructions() -> Option<String> {
+    let current_dir = std::env::current_dir().ok()?;
+    for dir in current_dir.ancestors() {
+        for name in ["Agents.md", "AGENTS.md"] {
+            let path = dir.join(name);
+            if let Ok(contents) = std::fs::read_to_string(&path) {
+                if !contents.trim().is_empty() {
+                    return Some(contents);
+                }
+            }
+        }
+    }
+    None
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
@@ -72,7 +99,7 @@ async fn main() -> Result<()> {
     };
 
     let client = OpenRouterClient::new(&config);
-    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string());
+    let mut repl = Repl::new(client, build_system_prompt());
 
     repl.run().await
 }
