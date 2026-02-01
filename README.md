@@ -2,6 +2,8 @@
 
 AI-powered coding assistant that runs in your terminal.
 
+> ⚠️ **Beta Warning**: This project is currently in beta. Features may change, and you may encounter bugs. Use with caution in production environments. Feedback and contributions are welcome!
+
 ## Installation
 
 ### Quick Install (macOS & Linux)
