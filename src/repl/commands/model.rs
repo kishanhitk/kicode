@@ -1,12 +1,10 @@
-use crate::api::client::OpenRouterClient;
 use crate::config::Config;
 use crate::error::Result;
-use crate::repl::output;
 use colored::Colorize;
 use dialoguer::{theme::ColorfulTheme, FuzzySelect};
 
 /// Curated list of popular coding-focused models: (id, display_name)
-const POPULAR_MODELS: &[(&str, &str)] = &[
+pub const POPULAR_MODELS: &[(&str, &str)] = &[
     ("x-ai/grok-code-fast-1", "Grok Code Fast 1 (Default)"),
     ("moonshotai/kimi-k2.5", "Kimi K2.5"),
     ("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5"),
@@ -18,15 +16,26 @@ const POPULAR_MODELS: &[(&str, &str)] = &[
     ("openai/gpt-5.2-codex", "GPT-5.2-Codex"),
 ];
 
-/// Handles the /model command - interactive model selection
-pub fn handle(client: &mut OpenRouterClient) -> Result<()> {
-    let current = client.model().to_string();
+/// Result of model selection
+pub enum ModelSelection {
+    /// User selected a new model (model_id, display_name)
+    Selected(String, String),
+    /// User selected the same model they already have
+    AlreadyCurrent,
+    /// User cancelled the selection
+    Cancelled,
+    /// Selection failed with an error
+    Error(String),
+}
 
+/// Shows interactive model selection menu.
+/// This function uses dialoguer and must be called from a blocking context.
+pub fn show_model_menu(current_model: String) -> ModelSelection {
     // Build display items, marking current model
     let items: Vec<String> = POPULAR_MODELS
         .iter()
         .map(|(id, name)| {
-            let marker = if *id == current { "* " } else { "  " };
+            let marker = if *id == current_model { "* " } else { "  " };
             format!("{}{} ({})", marker, name, id)
         })
         .collect();
@@ -34,11 +43,11 @@ pub fn handle(client: &mut OpenRouterClient) -> Result<()> {
     // Find current model's index for default selection
     let default_idx = POPULAR_MODELS
         .iter()
-        .position(|(id, _)| *id == current)
+        .position(|(id, _)| *id == current_model)
         .unwrap_or(0);
 
     println!("\n{}", "Model Selection".bold());
-    println!("Current: {}\n", current.green());
+    println!("Current: {}\n", current_model.green());
 
     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
         .with_prompt("Select model (type to filter, arrows to navigate)")
@@ -50,36 +59,19 @@ pub fn handle(client: &mut OpenRouterClient) -> Result<()> {
         Ok(Some(idx)) => {
             let (new_model, name): (&str, &str) = POPULAR_MODELS[idx];
 
-            if new_model == current {
-                output::print_info("Already using this model.");
-                return Ok(());
-            }
-
-            // Update runtime
-            client.set_model(new_model.to_string());
-
-            // Persist to config
-            if let Err(e) = save_model(new_model) {
-                output::print_warning(&format!(
-                    "Model changed to {} but failed to save: {}",
-                    name, e
-                ));
+            if new_model == current_model {
+                ModelSelection::AlreadyCurrent
             } else {
-                output::print_info(&format!("Model changed to: {} ({})", name, new_model));
+                ModelSelection::Selected(new_model.to_string(), name.to_string())
             }
         }
-        Ok(None) => {
-            output::print_info("Model selection cancelled.");
-        }
-        Err(e) => {
-            output::print_error(&format!("Selection failed: {}", e));
-        }
+        Ok(None) => ModelSelection::Cancelled,
+        Err(e) => ModelSelection::Error(format!("Selection failed: {}", e)),
     }
-
-    Ok(())
 }
 
-fn save_model(model: &str) -> Result<()> {
+/// Saves the selected model to config file
+pub fn save_model(model: &str) -> Result<()> {
     let mut file_config = Config::load_file_config().unwrap_or_default();
 
     file_config.model = if model == Config::default_model() {

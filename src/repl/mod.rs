@@ -60,15 +60,16 @@ impl Repl {
 
             // Handle "/" alone -> show command menu
             if line == "/" {
-                if let Some(cmd) = commands::show_command_menu() {
-                    self.execute_command(&cmd);
+                let cmd = tokio::task::spawn_blocking(commands::show_command_menu).await?;
+                if let Some(cmd) = cmd {
+                    self.execute_command(&cmd).await;
                 }
                 continue;
             }
 
             // Handle slash commands
             if let Some(cmd) = line.strip_prefix('/') {
-                self.execute_command(cmd);
+                self.execute_command(cmd).await;
                 continue;
             }
 
@@ -201,7 +202,7 @@ impl Repl {
     }
 
     /// Execute a slash command by name
-    fn execute_command(&mut self, cmd: &str) {
+    async fn execute_command(&mut self, cmd: &str) {
         match cmd {
             "help" => output::print_help(),
             "exit" | "quit" => {
@@ -213,13 +214,56 @@ impl Repl {
                 output::print_info("Conversation cleared.");
             }
             "model" => {
-                if let Err(e) = commands::model::handle(&mut self.client) {
-                    output::print_error(&e.to_string());
-                }
+                self.handle_model_command().await;
             }
             _ => {
                 output::print_error(&format!("Unknown command: /{}", cmd));
                 output::print_info("Type / to see available commands.");
+            }
+        }
+    }
+
+    /// Handle the /model command with interactive selection
+    async fn handle_model_command(&mut self) {
+        let current_model = self.client.model().to_string();
+
+        // Run the interactive selection in a blocking context
+        let selection = tokio::task::spawn_blocking(move || {
+            commands::model::show_model_menu(current_model)
+        })
+        .await;
+
+        let selection = match selection {
+            Ok(s) => s,
+            Err(e) => {
+                output::print_error(&format!("Failed to show model menu: {}", e));
+                return;
+            }
+        };
+
+        match selection {
+            commands::model::ModelSelection::Selected(model_id, name) => {
+                // Update runtime
+                self.client.set_model(model_id.clone());
+
+                // Persist to config
+                if let Err(e) = commands::model::save_model(&model_id) {
+                    output::print_warning(&format!(
+                        "Model changed to {} but failed to save: {}",
+                        name, e
+                    ));
+                } else {
+                    output::print_info(&format!("Model changed to: {} ({})", name, model_id));
+                }
+            }
+            commands::model::ModelSelection::AlreadyCurrent => {
+                output::print_info("Already using this model.");
+            }
+            commands::model::ModelSelection::Cancelled => {
+                output::print_info("Model selection cancelled.");
+            }
+            commands::model::ModelSelection::Error(e) => {
+                output::print_error(&e);
             }
         }
     }
