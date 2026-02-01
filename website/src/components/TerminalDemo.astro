@@ -214,13 +214,14 @@
     TIMING.line17 = tool9End + CONFIG.gaps.toolToTool;
     TIMING.line18 = TIMING.line17 + CONFIG.gaps.toolToTool;
 
-    // Final summary
+    // Final summary - longer delay between long messages
     const shellEnd = TIMING.line18 + (30 * CONFIG.typingSpeed.tool);
     TIMING.line19 = shellEnd + CONFIG.gaps.toolToAi;
-    TIMING.line20 = TIMING.line19 + CONFIG.gaps.toolToAi + 200;
+    // Add 2 second gap after long summary message before showing follow-up tip
+    TIMING.line20 = TIMING.line19 + (120 * CONFIG.typingSpeed.ai) + 2000;
 
-    // Interactive input
-    TIMING.inputLine = TIMING.line20 + (120 * CONFIG.typingSpeed.ai) + CONFIG.cursorDelay;
+    // Interactive input - wait for tip message + cursor delay
+    TIMING.inputLine = TIMING.line20 + (80 * CONFIG.typingSpeed.ai) + CONFIG.cursorDelay;
 
     // ============================================
     // UTILITY FUNCTIONS
