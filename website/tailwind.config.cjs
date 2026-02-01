@@ -4,23 +4,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Dark terminal theme colors
-        'bg-primary': '#0d1117',
-        'bg-surface': '#161b22',
-        'bg-elevated': '#21262d',
-        'text-primary': '#e6edf3',
-        'text-secondary': '#8b949e',
-        'text-muted': '#6e7681',
-        'accent-blue': '#58a6ff',
-        'accent-green': '#7ee787',
-        'accent-warning': '#d29922',
-        'accent-danger': '#f85149',
-        'border-default': '#30363d',
-        'border-muted': '#21262d',
+        // System - capable theme colors
+        'bg-primary': 'var(--bg-primary)', 
+        'bg-surface': 'var(--bg-surface)', 
+        'bg-elevated': 'var(--bg-elevated)', 
+        'text-primary': 'var(--text-primary)', 
+        'text-secondary': 'var(--text-secondary)', 
+        'text-muted': 'var(--text-muted)', 
+        'accent-blue': 'var(--accent-blue)', 
+        'accent-green': 'var(--accent-green)', 
+        'accent-warning': 'var(--accent-warning)',
+        'accent-danger': 'var(--accent-danger)',
+        'border-default': 'var(--border-default)', 
+        'border-muted': 'var(--border-muted)', 
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        sans: ['Google Sans', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['Geist Mono', 'ui-monospace', 'monospace'],
       },
       animation: {
         'typing': 'typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite',

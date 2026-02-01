@@ -17,10 +17,18 @@ const icons: Record<string, string> = {
 };
 ---
 
-<div class="group p-6 bg-bg-surface hover:bg-bg-elevated rounded-xl border border-border-default hover:border-border-muted transition-all duration-300">
-  <div class="w-12 h-12 mb-4 rounded-lg bg-accent-blue/10 flex items-center justify-center group-hover:bg-accent-blue/20 transition-colors">
-    <svg class="w-6 h-6 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" set:html={icons[icon]} />
+<div class="group p-6 rounded-xl hover:bg-white/5 transition-all duration-300">
+  <div
+    class="w-10 h-10 mb-4 text-text-muted group-hover:text-text-primary transition-colors"
+  >
+    <svg
+      class="w-full h-full"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      set:html={icons[icon]}
+    />
   </div>
-  <h3 class="text-lg font-semibold text-text-primary mb-2">{title}</h3>
+  <h3 class="text-lg font-medium text-text-primary mb-2">{title}</h3>
   <p class="text-text-secondary text-sm leading-relaxed">{description}</p>
 </div>

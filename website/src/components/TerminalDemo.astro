@@ -1,126 +1,698 @@
 ---
-// Animated terminal demo showing kicode in action
+// Terminal Demo Component - Shows gita-gpt rate limiting implementation
 ---
 
-<div class="w-full max-w-3xl mx-auto">
-  <div class="bg-bg-surface rounded-lg border border-border-default shadow-2xl overflow-hidden">
-    <!-- Terminal header -->
-    <div class="flex items-center gap-2 px-4 py-3 bg-bg-elevated border-b border-border-default">
-      <div class="flex gap-2">
-        <span class="w-3 h-3 rounded-full bg-accent-danger"></span>
-        <span class="w-3 h-3 rounded-full bg-accent-warning"></span>
-        <span class="w-3 h-3 rounded-full bg-accent-green"></span>
-      </div>
-      <span class="flex-1 text-center text-text-muted text-sm font-mono">kicode</span>
-    </div>
-
-    <!-- Terminal content -->
-    <div class="p-4 md:p-6 font-mono text-sm md:text-base space-y-3 min-h-[280px]">
-      <!-- Command prompt -->
-      <div class="flex items-start gap-2">
-        <span class="text-accent-green select-none">❯</span>
-        <span class="text-text-primary">kicode</span>
-      </div>
-
-      <!-- Welcome message -->
-      <div class="text-text-secondary pl-4 border-l-2 border-accent-blue/30">
-        <div class="text-accent-blue font-semibold mb-1">kicode v0.1.0</div>
-        <div class="text-text-muted text-xs mb-2">Model: anthropic/claude-3.5-sonnet</div>
-      </div>
-
-      <!-- User input animation -->
-      <div class="flex items-start gap-2 terminal-line" data-delay="500">
-        <span class="text-accent-blue select-none">you:</span>
-        <span class="text-text-primary typing-text" data-text="Fix the bug in src/auth.rs where tokens expire too early"></span>
-      </div>
-
-      <!-- AI thinking -->
-      <div class="flex items-start gap-2 terminal-line" data-delay="3500">
-        <span class="text-accent-green select-none">ai:</span>
-        <span class="text-text-secondary">I'll analyze the token expiration logic...</span>
-      </div>
-
-      <!-- Tool execution -->
-      <div class="terminal-line" data-delay="4500">
-        <div class="bg-bg-elevated rounded p-3 mt-2 border border-border-muted">
-          <div class="flex items-center gap-2 text-text-muted text-xs mb-2">
-            <svg class="w-4 h-4 text-accent-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <span>read_file</span>
-          </div>
-          <code class="text-accent-green text-xs">src/auth.rs:42-58</code>
+<div class="terminal-container" id="terminal-demo">
+    <div class="terminal-window">
+        <!-- Terminal Header (macOS style) -->
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <span class="terminal-button terminal-button-red"></span>
+                <span class="terminal-button terminal-button-yellow"></span>
+                <span class="terminal-button terminal-button-green"></span>
+            </div>
+            <div class="terminal-title">kicode - <a href="https://gita.kishans.in/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">gita-gpt</a></div>
+            <div class="terminal-header-spacer"></div>
         </div>
-      </div>
 
-      <!-- Resolution -->
-      <div class="flex items-start gap-2 terminal-line" data-delay="5500">
-        <span class="text-accent-green select-none">ai:</span>
-        <span class="text-text-primary">Found it! The token lifetime was set to 60 seconds instead of 3600.</span>
-      </div>
+        <!-- Terminal Content -->
+        <div class="terminal-content" id="terminal-content">
+            <!-- Welcome Banner (static) -->
+            <div class="terminal-line line-1 static-line">
+                <span class="text-cyan-terminal">Welcome to Kicode!</span>
+            </div>
 
-      <!-- Edit action -->
-      <div class="terminal-line" data-delay="6500">
-        <div class="bg-bg-elevated rounded p-3 mt-2 border border-accent-green/30">
-          <div class="flex items-center gap-2 text-accent-green text-xs">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Fixed in src/auth.rs:47</span>
-          </div>
+            <!-- Instructions (static) -->
+            <div class="terminal-line line-2 static-line">
+                <span class="text-muted-terminal">Type /help for commands, or start chatting.</span>
+            </div>
+
+            <!-- Empty line for spacing -->
+            <div class="terminal-line animated-line line-3">
+            </div>
+
+            <!-- Demo: User message -->
+            <div class="terminal-line animated-line line-4">
+                <span class="terminal-prompt">>></span>
+                <span class="typing-text" data-content="Add rate limiting to allow 15 messages/day on free tier. Show donate banner when limit hit."></span>
+            </div>
+
+            <!-- Demo: AI Response -->
+            <div class="terminal-line animated-line line-5 ai-line" data-content="I'll implement rate limiting for gita-gpt. This will involve creating a rate limiter, updating the API, and adding a donate banner. Let me start by exploring the project structure." data-type="cyan">
+            </div>
+
+            <!-- Demo: Tool: glob_search - find api routes -->
+            <div class="terminal-line animated-line line-6 tool-line" data-content="→ Searching for API routes..." data-type="muted">
+            </div>
+
+            <!-- Demo: Tool: read_file - check app structure -->
+            <div class="terminal-line animated-line line-7 tool-line" data-content="→ Reading app/api/chat/route.ts" data-type="muted">
+            </div>
+
+            <!-- Demo: Tool: read_file - check db schema -->
+            <div class="terminal-line animated-line line-8 tool-line" data-content="→ Reading prisma/schema.prisma" data-type="muted">
+            </div>
+
+            <!-- Demo: AI Response -->
+            <div class="terminal-line animated-line line-9 ai-line" data-content="I can see this is a Next.js app with Prisma ORM. The chat API is in app/api/chat/route.ts. I need to: 1) Add rate limiting logic, 2) Update the schema to track daily usage, 3) Create a donate banner component, 4) Wire everything together." data-type="cyan">
+            </div>
+
+            <!-- Demo: Tool: write_file - rate limiter lib -->
+            <div class="terminal-line animated-line line-10 tool-line" data-content="✓ Created lib/rate-limiter.ts" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: write_file - rate limit check function -->
+            <div class="terminal-line animated-line line-11 tool-line" data-content="✓ Created lib/check-rate-limit.ts" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: write_file - donate banner component -->
+            <div class="terminal-line animated-line line-12 tool-line" data-content="✓ Created components/donate-banner.tsx" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: edit_file - update prisma schema -->
+            <div class="terminal-line animated-line line-13 tool-line" data-content="✓ Updated prisma/schema.prisma - added DailyUsage model" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: edit_file - update chat API -->
+            <div class="terminal-line animated-line line-14 tool-line" data-content="✓ Updated app/api/chat/route.ts - added rate limit check" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: edit_file - update chat component -->
+            <div class="terminal-line animated-line line-15 tool-line" data-content="✓ Updated app/chat/page.tsx - integrated donate banner" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: write_file - add types -->
+            <div class="terminal-line animated-line line-16 tool-line" data-content="✓ Created types/rate-limit.ts" data-type="checkmark">
+            </div>
+
+            <!-- Demo: Tool: shell - run prisma migrate -->
+            <div class="terminal-line animated-line line-17 tool-line" data-content="$ npx prisma migrate dev --name add_daily_usage" data-type="muted">
+            </div>
+
+            <!-- Demo: Tool: shell output -->
+            <div class="terminal-line animated-line line-18 tool-line" data-content="  ✔ Generated Prisma Client" data-type="muted">
+            </div>
+
+            <!-- Demo: Summary -->
+            <div class="terminal-line animated-line line-19 ai-line" data-content="Done! I've implemented the complete rate limiting system. Free tier users get 15 messages per day. When they hit the limit, a donate banner appears with a link to upgrade. The counter resets daily at midnight UTC." data-type="cyan">
+            </div>
+
+            <!-- Demo: AI tips -->
+            <div class="terminal-line animated-line line-20 ai-line" data-content="Don't forget to set RATE_LIMIT_MAX=15 and UPGRADE_URL in your .env file. Run 'npm run db:push' to apply the schema changes to your database." data-type="cyan">
+            </div>
+
+            <!-- Interactive input line (shown after demo) -->
+            <div class="terminal-line input-line" id="input-line" style="opacity: 0;">
+                <span class="terminal-prompt">>></span>
+                <input
+                    type="text"
+                    class="terminal-input"
+                    id="terminal-input"
+                    placeholder="Type a message..."
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
-<style>
-  .terminal-line {
-    opacity: 0;
-    animation: fadeInSlide 0.4s ease-out forwards;
-  }
+<script is:inline>
+    // ============================================
+    // TERMINAL ANIMATION CONFIGURATION
+    // ============================================
 
-  .typing-text {
-    overflow: hidden;
-    border-right: 2px solid currentColor;
-    white-space: nowrap;
-    animation: typing 2s steps(50) forwards, blink-caret 0.75s step-end infinite;
-  }
+    const CONFIG = {
+        welcome: {
+            line1: 300,
+            line2: 900,
+            line3: 1500,
+        },
+        userInput: 1100,
+        aiResponseDelay: 900,
+        gaps: {
+            aiToTool: 500,
+            toolToTool: 500,
+            toolToAi: 600,
+        },
+        typingSpeed: {
+            user: 20,
+            ai: 10,
+            tool: 10,
+        },
+        cursorDelay: 500,
+    };
 
-  @keyframes fadeInSlide {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
+    // ============================================
+    // MOCK AI RESPONSES
+    // ============================================
+
+    const MOCK_RESPONSES = {
+        '/help': [
+            { type: 'ai', content: 'Available commands:' },
+            { type: 'tool', content: '  /help     - Show this help message' },
+            { type: 'tool', content: '  /clear    - Clear the terminal' },
+            { type: 'tool', content: '  /models   - List available AI models' },
+            { type: 'tool', content: '  /version  - Show version info' },
+            { type: 'ai', content: 'Or just type any coding question and I\'ll help you out!' },
+        ],
+        '/models': [
+            { type: 'ai', content: 'Available AI models via OpenRouter:' },
+            { type: 'tool', content: '  • Claude 3.5 Sonnet (anthropic/claude-3.5-sonnet)' },
+            { type: 'tool', content: '  • GPT-4o (openai/gpt-4o)' },
+            { type: 'tool', content: '  • Grok 2 (x-ai/grok-2)' },
+            { type: 'tool', content: '  • DeepSeek V3 (deepseek/deepseek-chat)' },
+            { type: 'ai', content: 'Use -m <model> to switch models. Default is Claude 3.5 Sonnet.' },
+        ],
+        '/version': [
+            { type: 'ai', content: 'kicode v0.1.0' },
+            { type: 'tool', content: 'Built with Rust 🦀' },
+            { type: 'tool', content: 'Powered by OpenRouter' },
+        ],
+        'default': [
+            { type: 'ai', content: 'That\'s an interesting question! In the real kicode CLI, I would:' },
+            { type: 'tool', content: '→ Analyze your project structure' },
+            { type: 'tool', content: '→ Read relevant files' },
+            { type: 'tool', content: '→ Provide specific code suggestions' },
+            { type: 'ai', content: 'Try typing "/help" to see available commands, or download kicode to try it for real!' },
+        ],
+    };
+
+    // ============================================
+    // CALCULATED TIMING
+    // ============================================
+
+    const TIMING = {
+        line4: CONFIG.userInput,
+        line5: CONFIG.userInput + (90 * CONFIG.typingSpeed.user) + CONFIG.aiResponseDelay,
+    };
+
+    // AI analysis phase
+    const ai1End = TIMING.line5 + (140 * CONFIG.typingSpeed.ai);
+    TIMING.line6 = ai1End + CONFIG.gaps.aiToTool;
+    TIMING.line7 = TIMING.line6 + CONFIG.gaps.toolToTool;
+    TIMING.line8 = TIMING.line7 + CONFIG.gaps.toolToTool;
+
+    // AI planning phase
+    const tool3End = TIMING.line8 + (30 * CONFIG.typingSpeed.tool);
+    TIMING.line9 = tool3End + CONFIG.gaps.toolToAi;
+
+    // File creation phase (batch 1)
+    const ai2End = TIMING.line9 + (180 * CONFIG.typingSpeed.ai);
+    TIMING.line10 = ai2End + CONFIG.gaps.aiToTool;
+    TIMING.line11 = TIMING.line10 + CONFIG.gaps.toolToTool;
+    TIMING.line12 = TIMING.line11 + CONFIG.gaps.toolToTool;
+
+    // File updates phase
+    TIMING.line13 = TIMING.line12 + CONFIG.gaps.toolToTool;
+    TIMING.line14 = TIMING.line13 + CONFIG.gaps.toolToTool;
+    TIMING.line15 = TIMING.line14 + CONFIG.gaps.toolToTool;
+    TIMING.line16 = TIMING.line15 + CONFIG.gaps.toolToTool;
+
+    // Shell command phase
+    const tool9End = TIMING.line16 + (30 * CONFIG.typingSpeed.tool);
+    TIMING.line17 = tool9End + CONFIG.gaps.toolToTool;
+    TIMING.line18 = TIMING.line17 + CONFIG.gaps.toolToTool;
+
+    // Final summary - longer delay between long messages
+    const shellEnd = TIMING.line18 + (30 * CONFIG.typingSpeed.tool);
+    TIMING.line19 = shellEnd + CONFIG.gaps.toolToAi;
+    // Add 2 second gap after long summary message before showing follow-up tip
+    TIMING.line20 = TIMING.line19 + (120 * CONFIG.typingSpeed.ai) + 2000;
+
+    // Interactive input - wait for tip message + cursor delay
+    TIMING.inputLine = TIMING.line20 + (80 * CONFIG.typingSpeed.ai) + CONFIG.cursorDelay;
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+
+    function typeLine(element, text, speed = CONFIG.typingSpeed.ai) {
+        return new Promise((resolve) => {
+            let i = 0;
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+
+            function type() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                    // Auto-scroll on every few characters to keep up with typing
+                    if (i % 3 === 0) scrollToBottom();
+                    setTimeout(type, speed);
+                } else {
+                    scrollToBottom();
+                    resolve();
+                }
+            }
+            type();
+        });
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+
+    function createLine(content, type = 'text') {
+        const line = document.createElement('div');
+        line.className = 'terminal-line interactive-line';
+        line.style.opacity = '0';
+        line.style.transform = 'translateY(4px)';
+        line.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+
+        if (type === 'user') {
+            line.innerHTML = `<span class="terminal-prompt">>></span><span class="text-terminal">${escapeHtml(content)}</span>`;
+        } else if (type === 'ai') {
+            line.innerHTML = `<span class="text-cyan-terminal">${escapeHtml(content)}</span>`;
+        } else if (type === 'tool') {
+            line.innerHTML = `<span class="text-muted-terminal">${escapeHtml(content)}</span>`;
+        }
+
+        return line;
     }
-  }
 
-  @keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
-  }
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-  @keyframes blink-caret {
-    50% { border-color: transparent }
-  }
-</style>
+    function scrollToBottom() {
+        const content = document.getElementById('terminal-content');
+        if (content) {
+            content.scrollTop = content.scrollHeight;
+        }
+    }
 
-<script>
-  // Animate terminal lines with delays
-  document.addEventListener('DOMContentLoaded', () => {
-    const lines = document.querySelectorAll('.terminal-line');
-    lines.forEach((line) => {
-      const delay = parseInt(line.getAttribute('data-delay') || '0');
-      line.style.animationDelay = `${delay}ms`;
+    // ============================================
+    // INTERACTIVE TERMINAL
+    // ============================================
+
+    let isInteractive = false;
+
+    function initInteractiveTerminal() {
+        const input = document.getElementById('terminal-input');
+        const inputLine = document.getElementById('input-line');
+        const content = document.getElementById('terminal-content');
+
+        if (!input || !inputLine || !content) return;
+
+        isInteractive = true;
+
+        // Show input line
+        inputLine.style.opacity = '1';
+        
+        // Focus input after a small delay to ensure visibility
+        setTimeout(() => {
+            input.focus();
+        }, 100);
+
+        // Handle input
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const message = input.value.trim();
+                if (!message) return;
+
+                // Add user message
+                const userLine = createLine(message, 'user');
+                content.insertBefore(userLine, inputLine);
+
+                // Animate user line
+                requestAnimationFrame(() => {
+                    userLine.style.opacity = '1';
+                    userLine.style.transform = 'translateY(0)';
+                });
+
+                input.value = '';
+                scrollToBottom();
+
+                // Handle commands
+                if (message === '/clear') {
+                    // Remove all interactive lines
+                    const interactiveLines = content.querySelectorAll('.interactive-line');
+                    interactiveLines.forEach(line => line.remove());
+                    return;
+                }
+
+                // Get response
+                const responses = MOCK_RESPONSES[message.toLowerCase()] || MOCK_RESPONSES['default'];
+
+                // Show typing indicator briefly
+                await new Promise(r => setTimeout(r, 300));
+
+                // Add responses with delay
+                for (const response of responses) {
+                    await new Promise(r => setTimeout(r, 200));
+                    const line = createLine(response.content, response.type);
+                    content.insertBefore(line, inputLine);
+
+                    requestAnimationFrame(() => {
+                        line.style.opacity = '1';
+                        line.style.transform = 'translateY(0)';
+                    });
+
+                    scrollToBottom();
+                }
+
+                scrollToBottom();
+            }
+        });
+
+        // Focus input when clicking anywhere in terminal
+        document.getElementById('terminal-demo').addEventListener('click', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                input.focus();
+            }
+        });
+    }
+
+    // ============================================
+    // MAIN ANIMATION SEQUENCE
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const lines = [
+            { selector: '.line-3', delay: CONFIG.welcome.line3 },
+            { selector: '.line-5', delay: TIMING.line5 },
+            { selector: '.line-6', delay: TIMING.line6 },
+            { selector: '.line-7', delay: TIMING.line7 },
+            { selector: '.line-8', delay: TIMING.line8 },
+            { selector: '.line-9', delay: TIMING.line9 },
+            { selector: '.line-10', delay: TIMING.line10 },
+            { selector: '.line-11', delay: TIMING.line11 },
+            { selector: '.line-12', delay: TIMING.line12 },
+            { selector: '.line-13', delay: TIMING.line13 },
+            { selector: '.line-14', delay: TIMING.line14 },
+            { selector: '.line-15', delay: TIMING.line15 },
+            { selector: '.line-16', delay: TIMING.line16 },
+            { selector: '.line-17', delay: TIMING.line17 },
+            { selector: '.line-18', delay: TIMING.line18 },
+            { selector: '.line-19', delay: TIMING.line19 },
+            { selector: '.line-20', delay: TIMING.line20 },
+        ];
+
+        lines.forEach(({ selector, delay }) => {
+            const el = document.querySelector(selector);
+            if (!el) return;
+
+            const content = el.dataset.content;
+            const type = el.dataset.type;
+
+            if (!content) return;
+
+            setTimeout(() => {
+                if (type === 'cyan') {
+                    el.classList.add('text-cyan-terminal');
+                } else if (type === 'muted') {
+                    el.classList.add('text-muted-terminal');
+                } else if (type === 'checkmark') {
+                    const checkmark = document.createElement('span');
+                    checkmark.className = 'text-green-terminal';
+                    checkmark.textContent = '✓ ';
+                    el.appendChild(checkmark);
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'text-muted-terminal';
+                    el.appendChild(textSpan);
+                    typeLine(textSpan, content.substring(2), CONFIG.typingSpeed.tool);
+                    return;
+                }
+
+                typeLine(el, content, CONFIG.typingSpeed.ai).then(() => {
+                    scrollToBottom();
+                });
+            }, delay);
+        });
+
+        // Initialize interactive terminal after demo completes
+        setTimeout(() => {
+            initInteractiveTerminal();
+            scrollToBottom();
+        }, TIMING.inputLine);
+
+        // Handle demo user input (line-4)
+        const line4 = document.querySelector('.line-4 .typing-text');
+        if (line4) {
+            const userText = line4.dataset.content;
+            setTimeout(() => {
+                line4.style.opacity = '1';
+                let i = 0;
+                function typeUser() {
+                    if (i < userText.length) {
+                        line4.textContent += userText.charAt(i);
+                        i++;
+                        if (i % 3 === 0) scrollToBottom();
+                        setTimeout(typeUser, CONFIG.typingSpeed.user);
+                    } else {
+                        scrollToBottom();
+                    }
+                }
+                typeUser();
+            }, CONFIG.userInput);
+        }
     });
-
-    // Set typing text content
-    const typingElements = document.querySelectorAll('.typing-text');
-    typingElements.forEach((el) => {
-      el.textContent = el.getAttribute('data-text') || '';
-    });
-  });
 </script>
+
+<style>
+    /* Terminal-specific theme variables - Light Mode (default) */
+    .terminal-container {
+        --terminal-bg: #0d1117;
+        --terminal-header-bg: #161b22;
+        --terminal-border: #30363d;
+        --terminal-title: #8b949e;
+        --terminal-text: #c9d1d9;
+        --terminal-text-muted: #8b949e;
+        --terminal-cyan: #00d9ff;
+        --terminal-green: #3fb950;
+
+        width: 800px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    /* Dark mode is the default for terminal */
+    @media (prefers-color-scheme: light) {
+        .terminal-container {
+            --terminal-bg: #ffffff;
+            --terminal-header-bg: #f4f4f5;
+            --terminal-border: #e4e4e7;
+            --terminal-title: #71717a;
+            --terminal-text: #18181b;
+            --terminal-text-muted: #71717a;
+            --terminal-cyan: #0891b2;
+            --terminal-green: #16a34a;
+        }
+    }
+
+    .terminal-window {
+        background: var(--terminal-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--terminal-border);
+        box-shadow:
+            0 25px 50px -12px rgba(0, 0, 0, 0.5),
+            0 10px 20px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .terminal-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--terminal-header-bg);
+        border-bottom: 1px solid var(--terminal-border);
+    }
+
+    .terminal-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .terminal-button {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .terminal-button-red {
+        background: #ff5f56;
+    }
+
+    .terminal-button-yellow {
+        background: #ffbd2e;
+    }
+
+    .terminal-button-green {
+        background: #27c93f;
+    }
+
+    .terminal-title {
+        flex: 1;
+        text-align: center;
+        font-size: 13px;
+        font-family: var(--sl-font-system-mono, "Geist Mono", monospace);
+        color: var(--terminal-title);
+        font-weight: 500;
+    }
+
+    .terminal-header-spacer {
+        width: 52px;
+    }
+
+    .terminal-content {
+        padding: 24px;
+        padding-bottom: 32px;
+        font-family: var(--sl-font-system-mono, "Geist Mono", monospace);
+        font-size: 14px;
+        line-height: 1.6;
+        height: 480px;
+        text-align: left;
+        background: var(--terminal-bg);
+        width: 100%;
+        box-sizing: border-box;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: var(--terminal-border) transparent;
+    }
+
+    .terminal-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .terminal-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .terminal-content::-webkit-scrollbar-thumb {
+        background: var(--terminal-border);
+        border-radius: 4px;
+    }
+
+    .terminal-line {
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        transform: translateY(4px);
+        margin-bottom: 4px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Static lines - visible immediately */
+    .static-line {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* AI lines can wrap */
+    .ai-line {
+        flex-wrap: wrap;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .ai-line span {
+        display: inline;
+    }
+
+    /* Tool execution lines */
+    .tool-line {
+        opacity: 0.8;
+    }
+
+    .terminal-prompt {
+        color: var(--terminal-green);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .text-cyan-terminal {
+        color: var(--terminal-cyan);
+    }
+
+    .text-muted-terminal {
+        color: var(--terminal-text-muted);
+    }
+
+    .text-green-terminal {
+        color: var(--terminal-green);
+    }
+
+    .text-terminal {
+        color: var(--terminal-text);
+    }
+
+    /* Typing animation for command lines */
+    .typing-text {
+        overflow: hidden;
+        color: var(--terminal-text);
+        opacity: 0;
+        flex: 1;
+        min-width: 0;
+        word-break: break-all;
+    }
+
+    /* Input line */
+    .input-line {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        margin-top: 8px;
+    }
+
+    .terminal-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--terminal-text);
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        margin: 0;
+        caret-color: var(--terminal-green);
+    }
+
+    .terminal-input::placeholder {
+        color: var(--terminal-text-muted);
+        opacity: 0.5;
+    }
+
+    /* Interactive lines (user messages) */
+    .interactive-line {
+        opacity: 1;
+        transform: translateY(0);
+        animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Line 4 shows the prompt immediately */
+    .line-4 {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .terminal-content {
+            padding: 16px;
+            padding-bottom: 24px;
+            font-size: 12px;
+            height: 440px;
+        }
+
+        .terminal-header {
+            padding: 10px 12px;
+        }
+
+        .terminal-title {
+            font-size: 11px;
+        }
+    }
+</style>
