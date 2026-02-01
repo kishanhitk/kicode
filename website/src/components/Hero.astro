@@ -39,7 +39,7 @@
 
     <!-- CTA Buttons -->
     <div
-      class="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up mb-20"
+      class="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up mb-16"
       style="animation-delay: 0.3s"
     >
       <a
@@ -56,6 +56,11 @@
       >
         GitHub
       </a>
+    </div>
+
+    <!-- Terminal Demo -->
+    <div class="w-full animate-slide-up" style="animation-delay: 0.4s">
+      <slot name="terminal-demo" />
     </div>
   </div>
 </section>
