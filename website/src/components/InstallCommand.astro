@@ -2,14 +2,14 @@
 // Install command with copy button
 ---
 
-<div class="w-full max-w-2xl mx-auto">
-  <div class="bg-bg-surface rounded-lg border border-border-default overflow-hidden">
+<div class="w-full max-w-2xl mx-auto px-0">
+  <div class="bg-bg-surface rounded-lg border border-border-default overflow-hidden max-w-full">
     <div class="flex items-center justify-between px-4 py-2 bg-bg-elevated border-b border-border-default">
       <span class="text-text-muted text-xs font-mono">Install with one command</span>
       <button
         id="copy-btn"
         class="flex items-center gap-1 text-text-secondary hover:text-accent-blue text-xs transition-colors"
-        data-command="curl -fsSL https://kicode.kishans.in/install.sh | sh"
+        data-command="curl -fsSL https://kicode.kishans.in/install | sh"
       >
         <svg id="copy-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -20,9 +20,9 @@
         <span id="copy-text">Copy</span>
       </button>
     </div>
-    <div class="p-4 font-mono text-sm overflow-x-auto">
+    <div class="p-3 sm:p-4 font-mono text-xs sm:text-sm overflow-x-auto whitespace-nowrap">
       <span class="text-accent-green select-none">$ </span>
-      <span class="text-text-primary">curl -fsSL https://kicode.kishans.in/install.sh | sh</span>
+      <span class="text-text-primary">curl -fsSL https://kicode.kishans.in/install | sh</span>
     </div>
   </div>
 
