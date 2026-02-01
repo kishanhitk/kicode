@@ -236,8 +236,11 @@
                 if (i < text.length) {
                     element.textContent += text.charAt(i);
                     i++;
+                    // Auto-scroll on every few characters to keep up with typing
+                    if (i % 3 === 0) scrollToBottom();
                     setTimeout(type, speed);
                 } else {
+                    scrollToBottom();
                     resolve();
                 }
             }
@@ -405,13 +408,16 @@
                     return;
                 }
 
-                typeLine(el, content, CONFIG.typingSpeed.ai);
+                typeLine(el, content, CONFIG.typingSpeed.ai).then(() => {
+                    scrollToBottom();
+                });
             }, delay);
         });
 
         // Initialize interactive terminal after demo completes
         setTimeout(() => {
             initInteractiveTerminal();
+            scrollToBottom();
         }, TIMING.inputLine);
 
         // Handle demo user input (line-4)
@@ -425,7 +431,10 @@
                     if (i < userText.length) {
                         line4.textContent += userText.charAt(i);
                         i++;
+                        if (i % 3 === 0) scrollToBottom();
                         setTimeout(typeUser, CONFIG.typingSpeed.user);
+                    } else {
+                        scrollToBottom();
                     }
                 }
                 typeUser();
