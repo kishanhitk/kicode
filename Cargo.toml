@@ -21,3 +21,5 @@ anyhow = "1"
 rpassword = "7"
 async-trait = "0.1"
 dotenvy = "0.15"
+inquire = { version = "0.7", features = ["fuzzy-matcher"] }
+crossterm = "0.28"
