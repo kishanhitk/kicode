@@ -1,7 +1,7 @@
 pub mod model;
 
 use colored::Colorize;
-use std::io::{self, BufRead, Write};
+use inquire::Select;
 
 /// Available slash commands with descriptions
 pub const COMMANDS: &[(&str, &str)] = &[
@@ -15,32 +15,23 @@ pub const COMMANDS: &[(&str, &str)] = &[
 /// Returns the selected command name, or None if cancelled
 pub fn show_command_menu() -> Option<String> {
     println!("\n{}", "Commands".bold());
-
-    for (i, (cmd, desc)) in COMMANDS.iter().enumerate() {
-        println!("  {}. /{} - {}", i + 1, cmd.green(), desc);
-    }
-
     println!();
-    print!("{}", "Enter number (or 'q' to cancel): ".yellow());
-    io::stdout().flush().ok();
 
-    let stdin = io::stdin();
-    let mut input = String::new();
-    if stdin.lock().read_line(&mut input).is_err() {
-        return None;
-    }
+    let items: Vec<String> = COMMANDS
+        .iter()
+        .map(|(cmd, desc)| format!("/{} - {}", cmd, desc))
+        .collect();
 
-    let input = input.trim();
+    let items_refs: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
-    if input.eq_ignore_ascii_case("q") || input.is_empty() {
-        return None;
-    }
-
-    match input.parse::<usize>() {
-        Ok(n) if n >= 1 && n <= COMMANDS.len() => Some(COMMANDS[n - 1].0.to_string()),
-        _ => {
-            println!("{}", "Invalid selection".red());
-            None
+    match Select::new("Select command:", items_refs).prompt() {
+        Ok(selection) => {
+            // Extract command name: "/model - ..." -> "model"
+            selection
+                .split_whitespace()
+                .next()
+                .map(|s: &str| s.trim_start_matches('/').to_string())
         }
+        Err(_) => None,
     }
 }

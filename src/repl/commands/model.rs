@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::error::Result;
 use colored::Colorize;
-use std::io::{self, BufRead, Write};
+use inquire::Select;
 
 /// Curated list of popular coding-focused models: (id, display_name)
 pub const POPULAR_MODELS: &[(&str, &str)] = &[
@@ -28,47 +28,49 @@ pub enum ModelSelection {
     Error(String),
 }
 
-/// Shows model selection menu.
+/// Shows model selection menu with arrow-key navigation.
 /// This function reads from stdin and must be called from a blocking context.
 pub fn show_model_menu(current_model: String) -> ModelSelection {
     println!("\n{}", "Model Selection".bold());
     println!("Current: {}\n", current_model.green());
 
-    // Print numbered list
-    for (i, (id, name)) in POPULAR_MODELS.iter().enumerate() {
-        let marker = if *id == current_model { "*" } else { " " };
-        println!("{} {}. {} ({})", marker, i + 1, name.cyan(), id.dimmed());
-    }
+    // Build menu items with current model marked
+    let items: Vec<String> = POPULAR_MODELS
+        .iter()
+        .map(|(id, name)| {
+            let marker = if *id == current_model { "* " } else { "  " };
+            format!("{}{} ({})", marker, name, id)
+        })
+        .collect();
 
-    println!();
-    print!("{}", "Enter number (or 'q' to cancel): ".yellow());
-    io::stdout().flush().ok();
+    let items_refs: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
-    // Read user input
-    let stdin = io::stdin();
-    let mut input = String::new();
-    if stdin.lock().read_line(&mut input).is_err() {
-        return ModelSelection::Error("Failed to read input".to_string());
-    }
+    // Find starting cursor position (current model)
+    let default_idx = POPULAR_MODELS
+        .iter()
+        .position(|(id, _)| *id == current_model)
+        .unwrap_or(0);
 
-    let input = input.trim();
+    match Select::new("Select model:", items_refs)
+        .with_starting_cursor(default_idx)
+        .prompt()
+    {
+        Ok(selection) => {
+            // Find which model was selected by matching display name
+            let idx = POPULAR_MODELS
+                .iter()
+                .position(|(_, name): &(&str, &str)| selection.contains(name))
+                .unwrap_or(0);
 
-    // Handle cancel
-    if input.eq_ignore_ascii_case("q") || input.is_empty() {
-        return ModelSelection::Cancelled;
-    }
+            let (new_model, name) = POPULAR_MODELS[idx];
 
-    // Parse number
-    match input.parse::<usize>() {
-        Ok(n) if n >= 1 && n <= POPULAR_MODELS.len() => {
-            let (new_model, name) = POPULAR_MODELS[n - 1];
             if new_model == current_model {
                 ModelSelection::AlreadyCurrent
             } else {
                 ModelSelection::Selected(new_model.to_string(), name.to_string())
             }
         }
-        _ => ModelSelection::Error(format!("Invalid selection: {}", input)),
+        Err(_) => ModelSelection::Cancelled,
     }
 }
 

@@ -7,7 +7,82 @@ use crate::conversation::Conversation;
 use crate::safety::analyzer::SafetyAnalyzer;
 use crate::tools::ToolRegistry;
 use anyhow::Result;
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::terminal;
 use std::io::{self, BufRead, Write};
+
+/// Result of reading user input
+enum InputResult {
+    /// User typed a line of text and pressed Enter
+    Line(String),
+    /// User pressed "/" as first character - show command menu
+    CommandMenu,
+    /// User pressed Ctrl+C or Ctrl+D - exit
+    Exit,
+}
+
+/// Read user input character by character.
+/// Returns immediately with CommandMenu if "/" is pressed on empty input.
+fn read_input() -> io::Result<InputResult> {
+    let mut buffer = String::new();
+
+    terminal::enable_raw_mode()?;
+
+    let result = loop {
+        if event::poll(std::time::Duration::from_millis(100))? {
+            if let Event::Key(KeyEvent {
+                code, modifiers, ..
+            }) = event::read()?
+            {
+                match (code, modifiers) {
+                    // Ctrl+C or Ctrl+D -> exit
+                    (KeyCode::Char('c'), KeyModifiers::CONTROL)
+                    | (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                        println!();
+                        break InputResult::Exit;
+                    }
+                    // Enter -> submit line
+                    (KeyCode::Enter, _) => {
+                        println!();
+                        break InputResult::Line(buffer);
+                    }
+                    // "/" on empty input -> command menu
+                    (KeyCode::Char('/'), _) if buffer.is_empty() => {
+                        println!();
+                        break InputResult::CommandMenu;
+                    }
+                    // Regular character
+                    (KeyCode::Char(c), _) => {
+                        buffer.push(c);
+                        print!("{}", c);
+                        io::stdout().flush()?;
+                    }
+                    // Backspace
+                    (KeyCode::Backspace, _) => {
+                        if buffer.pop().is_some() {
+                            // Move cursor back, overwrite with space, move back again
+                            print!("\x08 \x08");
+                            io::stdout().flush()?;
+                        }
+                    }
+                    // Escape -> clear line
+                    (KeyCode::Esc, _) => {
+                        // Clear the current line
+                        for _ in 0..buffer.len() {
+                            print!("\x08 \x08");
+                        }
+                        io::stdout().flush()?;
+                        buffer.clear();
+                    }
+                    _ => {}
+                }
+            }
+        }
+    };
+
+    terminal::disable_raw_mode()?;
+    Ok(result)
+}
 
 pub struct Repl {
     client: OpenRouterClient,
@@ -34,48 +109,49 @@ impl Repl {
             print!("{}", prompt);
             io::stdout().flush()?;
 
-            let line = tokio::task::spawn_blocking(|| {
-                let stdin = io::stdin();
-                let mut line = String::new();
-                match stdin.lock().read_line(&mut line) {
-                    Ok(0) => None, // EOF
-                    Ok(_) => Some(line),
-                    Err(_) => None,
-                }
-            })
-            .await?;
+            let input = tokio::task::spawn_blocking(read_input).await?;
 
-            let line = match line {
-                Some(l) => l,
-                None => {
+            match input {
+                Ok(InputResult::Exit) => {
                     output::print_info("Goodbye!");
                     break;
                 }
-            };
-
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
-            }
-
-            // Handle "/" alone -> show command menu
-            if line == "/" {
-                let cmd = tokio::task::spawn_blocking(commands::show_command_menu).await?;
-                if let Some(cmd) = cmd {
-                    self.execute_command(&cmd).await;
+                Ok(InputResult::CommandMenu) => {
+                    // "/" pressed on empty input -> show command menu immediately
+                    let cmd =
+                        tokio::task::spawn_blocking(|| commands::show_command_menu()).await;
+                    match cmd {
+                        Ok(Some(cmd)) => {
+                            if self.execute_command(&cmd).await {
+                                break;
+                            }
+                        }
+                        Ok(None) => {} // Cancelled
+                        Err(e) => output::print_error(&format!("Command menu failed: {}", e)),
+                    }
                 }
-                continue;
-            }
+                Ok(InputResult::Line(line)) => {
+                    let line = line.trim();
+                    if line.is_empty() {
+                        continue;
+                    }
 
-            // Handle slash commands
-            if let Some(cmd) = line.strip_prefix('/') {
-                self.execute_command(cmd).await;
-                continue;
-            }
+                    // Handle slash commands (e.g., "/help", "/model")
+                    if let Some(cmd) = line.strip_prefix('/') {
+                        if self.execute_command(cmd).await {
+                            break;
+                        }
+                        continue;
+                    }
 
-            // Regular message
-            if let Err(e) = self.process_message(line).await {
-                output::print_error(&e.to_string());
+                    // Regular message
+                    if let Err(e) = self.process_message(line).await {
+                        output::print_error(&e.to_string());
+                    }
+                }
+                Err(e) => {
+                    output::print_error(&format!("Input error: {}", e));
+                }
             }
         }
 
@@ -201,13 +277,14 @@ impl Repl {
         Ok(response.trim().eq_ignore_ascii_case("y"))
     }
 
-    /// Execute a slash command by name
-    async fn execute_command(&mut self, cmd: &str) {
+    /// Execute a slash command by name.
+    /// Returns `true` if the REPL should exit.
+    async fn execute_command(&mut self, cmd: &str) -> bool {
         match cmd {
             "help" => output::print_help(),
             "exit" | "quit" => {
                 output::print_info("Goodbye!");
-                std::process::exit(0);
+                return true;
             }
             "clear" => {
                 self.conversation.clear();
@@ -221,6 +298,7 @@ impl Repl {
                 output::print_info("Type / to see available commands.");
             }
         }
+        false
     }
 
     /// Handle the /model command with interactive selection
