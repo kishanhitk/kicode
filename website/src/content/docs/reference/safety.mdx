@@ -1,0 +1,245 @@
+---
+title: Safety Reference
+description: Command safety analysis patterns and configuration
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+kicode includes a safety system that analyzes shell commands before execution. Dangerous commands require explicit user confirmation.
+
+## How Safety Analysis Works
+
+When the AI uses the `shell` tool, kicode:
+
+1. Analyzes the command against known dangerous patterns
+2. If a match is found, prompts for confirmation
+3. Only executes after explicit user approval
+
+```
+[tool: shell]
+  command: "rm -rf build/"
+
+⚠️ This command may be dangerous:
+  - Pattern matched: rm -rf
+
+Do you want to proceed? [y/N]
+```
+
+## Built-in Dangerous Patterns
+
+### Destructive File Operations
+
+| Pattern | Matches |
+|---------|---------|
+| `rm -rf`, `rm -f` | Recursive/forced file deletion |
+| `rmdir` | Directory removal |
+| `unlink` | File unlinking |
+| `shred` | Secure file deletion |
+
+### Privilege Escalation
+
+| Pattern | Matches |
+|---------|---------|
+| `sudo` | Superuser commands |
+| `su` | Switch user |
+| `doas` | OpenBSD privilege escalation |
+| `chmod [setuid patterns]` | Dangerous permission changes |
+| `chown`, `chgrp` | Ownership changes |
+
+### Git Destructive Operations
+
+| Pattern | Matches |
+|---------|---------|
+| `git push --force`, `git push -f` | Force push |
+| `git reset --hard` | Hard reset |
+| `git clean -f`, `-d`, `-x` | Clean working directory |
+| `git branch -D`, `-d` | Delete branches |
+| `git checkout .` | Discard changes |
+| `git restore .` | Restore all files |
+
+### System and Disk Operations
+
+| Pattern | Matches |
+|---------|---------|
+| `mkfs` | Create filesystem |
+| `dd` | Direct disk access |
+| `fdisk`, `parted` | Partition tools |
+| `mount`, `umount` | Mount operations |
+| `systemctl stop/restart/disable` | Service management |
+| `service ... stop/restart` | Legacy service control |
+| `launchctl unload/remove` | macOS service control |
+
+### Remote Code Execution
+
+| Pattern | Matches |
+|---------|---------|
+| `curl ... \| sh/bash/python` | Pipe to interpreter |
+| `wget ... \| sh/bash/python` | Pipe to interpreter |
+| `curl ... > /path` | Download to system path |
+| `wget -O /path` | Download to system path |
+| `eval` | Evaluate strings as code |
+| `source /dev/stdin` | Source from stdin |
+
+### Dangerous Redirects
+
+| Pattern | Matches |
+|---------|---------|
+| `> /etc/...` | Write to system config |
+| `> ~/.bashrc`, `~/.zshrc` | Modify shell config |
+| `> /usr/...` | Write to system directories |
+| `> /bin/`, `/sbin/` | Write to binary directories |
+| `> /var/...` | Write to var directories |
+
+### Process Management
+
+| Pattern | Matches |
+|---------|---------|
+| `kill -9` | Force kill |
+| `killall` | Kill by name |
+| `pkill` | Pattern-based kill |
+
+### Network Operations
+
+| Pattern | Matches |
+|---------|---------|
+| `iptables` | Firewall rules |
+| `ufw` | Uncomplicated firewall |
+| `firewall-cmd` | firewalld management |
+
+### Package Managers
+
+| Pattern | Matches |
+|---------|---------|
+| `apt install`, `apt-get install` | Debian packages |
+| `yum install`, `dnf install` | Red Hat packages |
+| `pacman -S` | Arch packages |
+| `brew install` | Homebrew packages |
+| `npm install -g` | Global npm packages |
+| `pip install` | Python packages |
+| `cargo install` | Rust packages |
+
+### Container/VM Operations
+
+| Pattern | Matches |
+|---------|---------|
+| `docker rm/rmi/stop/kill` | Docker container ops |
+| `podman rm/rmi/stop/kill` | Podman container ops |
+| `kubectl delete` | Kubernetes deletions |
+
+### Scheduled Tasks
+
+| Pattern | Matches |
+|---------|---------|
+| `crontab` | Cron job editing |
+| `at` | One-time scheduled jobs |
+
+### Remote Operations
+
+| Pattern | Matches |
+|---------|---------|
+| `ssh user@host` | SSH connections |
+| `scp` | Secure copy |
+| `rsync ... :` | Remote sync |
+
+## Adding Custom Patterns
+
+Add patterns to your config file:
+
+```toml
+[safety]
+additional_patterns = [
+  "\\bmy-deploy-script\\b",
+  "\\brm.*production\\b",
+  "\\bdrop-database\\b"
+]
+```
+
+### Pattern Syntax
+
+Patterns use [Rust regex syntax](https://docs.rs/regex/latest/regex/#syntax):
+
+| Syntax | Meaning |
+|--------|---------|
+| `\b` | Word boundary |
+| `.*` | Any characters |
+| `\s+` | One or more whitespace |
+| `(a\|b)` | Either a or b |
+| `[abc]` | Any of a, b, c |
+
+### Example Patterns
+
+```toml
+[safety]
+additional_patterns = [
+  # Match "deploy" followed by "prod"
+  "\\bdeploy.*prod",
+
+  # Match any rm with force flag
+  "\\brm\\s+.*-f",
+
+  # Match specific script
+  "\\bmy-dangerous-script\\.sh\\b"
+]
+```
+
+## Skipping Confirmation
+
+<Aside type="danger" title="Use with Extreme Caution">
+Skipping safety confirmations can lead to accidental data loss or system damage.
+</Aside>
+
+You can configure commands to skip confirmation:
+
+```toml
+[safety]
+skip_confirmation = []
+```
+
+This is intentionally left empty by default. Adding commands here removes a critical safety layer.
+
+## Safety Best Practices
+
+1. **Review every confirmation prompt**
+   - Read the matched pattern
+   - Verify the command is intentional
+
+2. **Don't blindly approve**
+   - Understand what the command does
+   - Check for typos in paths
+
+3. **Use additional_patterns for your workflow**
+   - Add patterns for project-specific dangerous commands
+   - Better safe than sorry
+
+4. **Never skip confirmation in shared environments**
+   - Each user should make their own safety decisions
+
+## How Patterns Are Matched
+
+1. Command is received from AI
+2. Each pattern is tested against the command
+3. If ANY pattern matches, confirmation is required
+4. User must type 'y' or 'Y' to proceed
+
+```rust
+// Simplified matching logic
+fn is_dangerous(command: &str) -> bool {
+    patterns.iter().any(|p| p.is_match(command))
+}
+```
+
+## Viewing Matched Patterns
+
+When a command is flagged, you'll see which pattern matched:
+
+```
+⚠️ This command may be dangerous:
+  - Pattern matched: git push --force
+
+Do you want to proceed? [y/N]
+```
+
+## Related
+
+- [Configuration Reference](/reference/configuration) - Full config options
+- [Shell Tool](/tools/shell) - Shell command execution

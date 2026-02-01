@@ -1,0 +1,178 @@
+---
+title: Models Reference
+description: AI models available through OpenRouter
+---
+
+kicode supports any model available through [OpenRouter](https://openrouter.ai). This page covers recommended models and how to choose the right one.
+
+## Default Model
+
+The default model is:
+
+```
+x-ai/grok-code-fast-1
+```
+
+This was chosen for its balance of speed, cost, and coding capability.
+
+## Recommended Models
+
+### For Coding Tasks
+
+| Model | ID | Strengths |
+|-------|-----|-----------|
+| Claude 3.5 Sonnet | `anthropic/claude-3.5-sonnet` | Best overall coding, great reasoning |
+| GPT-4 Turbo | `openai/gpt-4-turbo` | Broad knowledge, long context |
+| Grok Code Fast | `x-ai/grok-code-fast-1` | Fast, cost-effective |
+| DeepSeek Coder | `deepseek/deepseek-coder` | Specialized for code |
+
+### For Complex Reasoning
+
+| Model | ID | Strengths |
+|-------|-----|-----------|
+| Claude 3 Opus | `anthropic/claude-3-opus` | Most capable, best reasoning |
+| GPT-4 | `openai/gpt-4` | Strong general reasoning |
+
+### For Speed/Cost
+
+| Model | ID | Strengths |
+|-------|-----|-----------|
+| Claude 3 Haiku | `anthropic/claude-3-haiku` | Very fast, low cost |
+| GPT-3.5 Turbo | `openai/gpt-3.5-turbo` | Fast, cheap |
+
+## Selecting a Model
+
+### Via CLI Flag
+
+```bash
+kicode --model anthropic/claude-3.5-sonnet
+```
+
+### Via Environment Variable
+
+```bash
+export KICODE_MODEL="anthropic/claude-3.5-sonnet"
+kicode
+```
+
+### Via Config File
+
+```toml
+# ~/.config/kicode/config.toml
+model = "anthropic/claude-3.5-sonnet"
+```
+
+## Model ID Format
+
+OpenRouter model IDs follow the format:
+
+```
+provider/model-name
+```
+
+Examples:
+- `anthropic/claude-3.5-sonnet`
+- `openai/gpt-4-turbo`
+- `google/gemini-pro`
+- `meta-llama/llama-3-70b-instruct`
+
+## Finding Available Models
+
+Browse all available models at [openrouter.ai/models](https://openrouter.ai/models).
+
+Filter by:
+- **Modality**: Text (required for kicode)
+- **Context Length**: Longer is better for large codebases
+- **Pricing**: Cost per token
+
+## Model Comparison
+
+### Capability Tiers
+
+| Tier | Examples | Best For |
+|------|----------|----------|
+| Flagship | Claude 3 Opus, GPT-4 | Complex architecture, subtle bugs |
+| Balanced | Claude 3.5 Sonnet, GPT-4 Turbo | Day-to-day coding |
+| Fast | Claude 3 Haiku, GPT-3.5 | Quick tasks, simple edits |
+
+### Context Windows
+
+| Model | Context Length |
+|-------|---------------|
+| GPT-4 Turbo | 128k tokens |
+| Claude 3.5 Sonnet | 200k tokens |
+| Claude 3 Opus | 200k tokens |
+
+Longer context = can handle more code at once.
+
+### Pricing Considerations
+
+Costs vary significantly. Check current pricing at [openrouter.ai/models](https://openrouter.ai/models).
+
+General guidance:
+- **Opus/GPT-4**: Higher cost, use for complex tasks
+- **Sonnet/Turbo**: Moderate cost, good default
+- **Haiku/3.5**: Low cost, good for simple tasks
+
+## Choosing the Right Model
+
+### Use Claude 3.5 Sonnet When:
+- Writing new features
+- Debugging complex issues
+- Refactoring code
+- Understanding unfamiliar codebases
+
+### Use Claude 3 Opus When:
+- Designing system architecture
+- Solving subtle logic bugs
+- Need highest accuracy
+
+### Use Grok Code Fast When:
+- Quick edits and fixes
+- Simple code generation
+- Cost-conscious usage
+
+### Use Claude 3 Haiku When:
+- Very simple tasks
+- High-volume operations
+- Maximum speed needed
+
+## Switching Models Mid-Session
+
+You cannot switch models during a session. To use a different model:
+
+1. Exit the current session
+2. Start a new session with the desired model
+
+```bash
+# Exit current session
+you: exit
+
+# Start with new model
+kicode --model anthropic/claude-3-opus
+```
+
+## Troubleshooting
+
+### "Unknown model" Error
+
+The model ID is not recognized by OpenRouter.
+
+**Fix:** Verify the model ID at [openrouter.ai/models](https://openrouter.ai/models).
+
+### "Rate limited" Error
+
+You've exceeded the model's rate limit.
+
+**Fix:** Wait a few seconds or try a different model.
+
+### "Insufficient credits" Error
+
+Your OpenRouter account needs more credits.
+
+**Fix:** Add credits at [openrouter.ai/credits](https://openrouter.ai/credits).
+
+## Related
+
+- [Configuration Reference](/reference/configuration) - Setting default model
+- [Environment Variables](/reference/environment) - `KICODE_MODEL` variable

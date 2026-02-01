@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Terminal theme customizations for Starlight */
+:root {
+  --sl-color-accent-low: #1f3a5f;
+  --sl-color-accent: #58a6ff;
+  --sl-color-accent-high: #a5d6ff;
+  --sl-color-white: #e6edf3;
+  --sl-color-gray-1: #c9d1d9;
+  --sl-color-gray-2: #b1bac4;
+  --sl-color-gray-3: #8b949e;
+  --sl-color-gray-4: #6e7681;
+  --sl-color-gray-5: #484f58;
+  --sl-color-gray-6: #30363d;
+  --sl-color-gray-7: #21262d;
+  --sl-color-black: #0d1117;
+
+  --sl-font-system: 'Inter', system-ui, -apple-system, sans-serif;
+  --sl-font-system-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Override background */
+  --sl-color-bg: var(--sl-color-black);
+  --sl-color-bg-nav: var(--sl-color-gray-7);
+  --sl-color-bg-sidebar: var(--sl-color-gray-7);
+  --sl-color-hairline-shade: var(--sl-color-gray-6);
+}
+
+/* Code blocks styling */
+.expressive-code {
+  --ec-codeBg: #161b22;
+  --ec-codeFontFamily: 'JetBrains Mono', monospace;
+  --ec-codePadBlock: 1rem;
+  --ec-codePadInline: 1.25rem;
+  --ec-brdRad: 0.5rem;
+}
+
+/* Terminal prompt styling */
+.terminal-prompt::before {
+  content: '❯ ';
+  color: #7ee787;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #161b22;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #484f58;
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(88, 166, 255, 0.3);
+  color: #e6edf3;
+}
+
+/* Link hover effects */
+a:hover {
+  text-decoration-color: #58a6ff;
+}
+
+/* Enhanced table styling in docs */
+.sl-markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.sl-markdown-content th,
+.sl-markdown-content td {
+  border: 1px solid #30363d;
+  padding: 0.75rem;
+}
+
+.sl-markdown-content th {
+  background: #161b22;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+/* Remove transitions from animated elements */
+.animate-typing,
+.animate-blink {
+  transition: none;
+}
+
+/* Starlight logo styling to match marketing page */
+.site-title {
+  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  font-weight: 600 !important;
+}
+
+/* Style the SVG logo text */
+.site-title img,
+.site-title svg {
+  height: 1.75rem;
+}
+
+/* Ensure logo link has proper styling */
+[data-sl-logo] {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}

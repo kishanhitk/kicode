@@ -1,0 +1,230 @@
+---
+title: glob_search
+description: Find files matching glob patterns
+---
+
+The `glob_search` tool finds files in your project using glob patterns. It's useful for discovering files, understanding project structure, and locating specific file types.
+
+## Description
+
+Search for files matching a glob pattern. Use patterns like `**/*.rs` to find all Rust files, `src/*.py` for Python files in src directory, etc.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `pattern` | string | Yes | The glob pattern to match (e.g., `**/*.rs`) |
+| `base_path` | string | No | Base directory to search from (default: `.`) |
+| `max_results` | integer | No | Maximum results to return (default: 100) |
+
+## Examples
+
+### Find All Files of a Type
+
+```
+you: What Rust files are in this project?
+
+ai: I'll search for all .rs files.
+
+[tool: glob_search]
+  pattern: "**/*.rs"
+
+Found 8 files:
+src/main.rs
+src/lib.rs
+src/config.rs
+src/error.rs
+src/conversation.rs
+src/api/mod.rs
+src/api/client.rs
+src/api/types.rs
+```
+
+### Search in Specific Directory
+
+```
+you: What's in the tests folder?
+
+ai: I'll list all files in the tests directory.
+
+[tool: glob_search]
+  pattern: "tests/**/*"
+
+Found 4 files:
+tests/integration_test.rs
+tests/fixtures/config.toml
+tests/fixtures/sample.txt
+tests/fixtures/expected.json
+```
+
+### Find Configuration Files
+
+```
+you: Find all TOML configuration files
+
+ai: I'll search for .toml files.
+
+[tool: glob_search]
+  pattern: "**/*.toml"
+
+Found 3 files:
+Cargo.toml
+config.toml
+tests/fixtures/config.toml
+```
+
+### With Base Path
+
+```
+you: Find JavaScript files in the frontend directory
+
+ai: I'll search within the frontend folder.
+
+[tool: glob_search]
+  pattern: "**/*.js"
+  base_path: "frontend"
+
+Found 12 files:
+frontend/src/index.js
+frontend/src/App.js
+frontend/src/utils/helpers.js
+...
+```
+
+## Glob Pattern Syntax
+
+### Basic Patterns
+
+| Pattern | Matches |
+|---------|---------|
+| `*` | Any characters in a single path segment |
+| `**` | Any characters across path segments |
+| `?` | Any single character |
+| `[abc]` | Any character in brackets |
+| `[!abc]` | Any character not in brackets |
+
+### Examples
+
+| Pattern | Matches | Doesn't Match |
+|---------|---------|---------------|
+| `*.rs` | `main.rs`, `lib.rs` | `src/main.rs` |
+| `**/*.rs` | `main.rs`, `src/main.rs`, `src/api/mod.rs` | `main.txt` |
+| `src/*.rs` | `src/main.rs` | `src/api/mod.rs` |
+| `src/**/*.rs` | `src/main.rs`, `src/api/mod.rs` | `tests/test.rs` |
+| `*.{rs,toml}` | `main.rs`, `Cargo.toml` | `main.py` |
+| `test_?.rs` | `test_1.rs`, `test_a.rs` | `test_12.rs` |
+
+## Output Format
+
+### Success with Matches
+
+```
+Found {count} files:
+path/to/file1
+path/to/file2
+...
+```
+
+### No Matches
+
+```
+No files found matching the pattern.
+```
+
+### Truncated Results
+
+```
+Found 100 files:
+...
+(showing first 100 results)
+```
+
+## Use Cases
+
+### Explore Project Structure
+
+```
+# Find all source files
+glob_search: "src/**/*"
+
+# Find all test files
+glob_search: "**/*test*.rs"
+```
+
+### Find Configuration
+
+```
+# Find dotfiles
+glob_search: "**/.*"
+
+# Find config files
+glob_search: "**/*.{json,yaml,toml}"
+```
+
+### Locate Assets
+
+```
+# Find images
+glob_search: "**/*.{png,jpg,svg}"
+
+# Find stylesheets
+glob_search: "**/*.{css,scss}"
+```
+
+### Check for Files Before Writing
+
+```
+# Does this file exist?
+glob_search: "**/expected_name.rs"
+# If no results, safe to create
+```
+
+## Comparison with grep
+
+| Need | Use glob_search | Use grep |
+|------|----------------|----------|
+| Find files by name | ✅ | ❌ |
+| Find files by content | ❌ | ✅ |
+| List project structure | ✅ | ❌ |
+| Search for patterns in code | ❌ | ✅ |
+
+Often used together:
+
+```
+# 1. Find relevant files
+glob_search: "**/*.rs"
+
+# 2. Search within those files
+grep: "fn main"
+     file_pattern: "*.rs"
+```
+
+## Best Practices
+
+1. **Use `**` for recursive search**
+   - `**/*.rs` finds all Rust files at any depth
+
+2. **Be specific to reduce noise**
+   - `src/**/*.rs` instead of `**/*.rs`
+
+3. **Use braces for multiple extensions**
+   - `**/*.{ts,tsx}` for TypeScript files
+
+4. **Limit results for large projects**
+   - Set `max_results` if expecting many matches
+
+5. **Combine with read_file**
+   - Find files, then read the ones you need
+
+## Error Handling
+
+| Error | Cause |
+|-------|-------|
+| `Invalid glob pattern: ...` | Syntax error in pattern |
+| `No files found matching the pattern.` | No matches in scope |
+
+## Related Tools
+
+- [grep](/tools/grep) - Search file contents
+- [read_file](/tools/read-file) - Read files after finding them
+- [write_file](/tools/write-file) - Create new files

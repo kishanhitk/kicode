@@ -1,0 +1,206 @@
+---
+title: edit_file
+description: Edit files using search-replace with exact matching
+---
+
+The `edit_file` tool modifies files using a search-and-replace approach. It finds an exact text match and replaces it with new content, ensuring precise and safe edits.
+
+## Description
+
+Edit a file by searching for specific text and replacing it with new text. The search text must match exactly one location in the file to avoid ambiguous edits.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `path` | string | Yes | The path to the file to edit |
+| `old_text` | string | Yes | The exact text to search for and replace |
+| `new_text` | string | Yes | The text to replace it with |
+
+## Examples
+
+### Simple Text Replace
+
+```
+you: Change the greeting from "Hello" to "Welcome"
+
+ai: I'll update the greeting in the file.
+
+[tool: edit_file]
+  path: "src/main.rs"
+  old_text: 'println!("Hello, world!");'
+  new_text: 'println!("Welcome to kicode!");'
+
+Successfully edited src/main.rs.
+
+Context after edit:
+   3 | fn main() {
+   4 |     println!("Welcome to kicode!");
+   5 | }
+```
+
+### Multi-line Edit
+
+```
+you: Add error handling to the config loading
+
+ai: I'll wrap the config loading with proper error handling.
+
+[tool: edit_file]
+  path: "src/main.rs"
+  old_text: |
+    let config = Config::load();
+    run(config);
+  new_text: |
+    let config = match Config::load() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Failed to load config: {}", e);
+            std::process::exit(1);
+        }
+    };
+    run(config);
+
+Successfully edited src/main.rs.
+```
+
+### Adding New Code
+
+```
+you: Add a timeout field to the Config struct
+
+ai: I'll add the timeout field to the struct.
+
+[tool: edit_file]
+  path: "src/config.rs"
+  old_text: |
+    pub struct Config {
+        pub api_key: String,
+        pub model: String,
+    }
+  new_text: |
+    pub struct Config {
+        pub api_key: String,
+        pub model: String,
+        pub timeout: u64,
+    }
+
+Successfully edited src/config.rs.
+```
+
+## How Matching Works
+
+### Exact Match Required
+
+The `old_text` must match exactly, including:
+- Whitespace (spaces, tabs, newlines)
+- Indentation
+- Case sensitivity
+
+```
+# This WILL match:
+old_text: "fn main() {"
+
+# This will NOT match (extra space):
+old_text: "fn main()  {"
+```
+
+### Unique Match Required
+
+The text must appear exactly once in the file:
+
+```
+# If "TODO" appears 5 times, you'll get:
+"Ambiguous edit: found 5 matches for the search text.
+Please provide more context to make the match unique."
+```
+
+To fix, include more surrounding context:
+
+```
+# Instead of:
+old_text: "TODO"
+
+# Use:
+old_text: "// TODO: implement validation"
+```
+
+## Output Format
+
+**On success:**
+```
+Successfully edited {path}.
+
+Context after edit:
+  {surrounding lines with the change}
+```
+
+**On text not found:**
+```
+Text not found in file. Make sure old_text matches exactly,
+including whitespace and newlines.
+```
+
+**On ambiguous match:**
+```
+Ambiguous edit: found {count} matches for the search text.
+Please provide more context to make the match unique.
+```
+
+## Best Practices
+
+1. **Read first, then edit**
+   - Use `read_file` to see exact content
+   - Copy text precisely for `old_text`
+
+2. **Include context for uniqueness**
+   - Add surrounding lines if the text isn't unique
+   - Function signatures, struct names help disambiguate
+
+3. **Keep edits focused**
+   - Make one logical change at a time
+   - Easier to verify and rollback if needed
+
+4. **Preserve indentation**
+   - Match the existing code style
+   - Include proper indentation in `new_text`
+
+## Error Scenarios
+
+### Text Not Found
+
+```
+[tool: edit_file]
+  old_text: "function main()"
+
+Error: Text not found in file.
+```
+
+**Fix:** Read the file first and copy the exact text.
+
+### Multiple Matches
+
+```
+[tool: edit_file]
+  old_text: "return Ok(())"
+
+Error: Ambiguous edit: found 3 matches
+```
+
+**Fix:** Include more context around the specific occurrence you want to change.
+
+## Comparison with write_file
+
+| Scenario | Use edit_file | Use write_file |
+|----------|--------------|----------------|
+| Change part of a file | ✅ | ❌ |
+| Create new file | ❌ | ✅ |
+| Replace entire file | ❌ | ✅ |
+| Add code to existing file | ✅ | ❌ |
+| Fix a bug in one line | ✅ | ❌ |
+
+## Related Tools
+
+- [read_file](/tools/read-file) - Read file contents before editing
+- [write_file](/tools/write-file) - Create or overwrite entire files
+- [grep](/tools/grep) - Find text locations before editing

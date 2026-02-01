@@ -1,0 +1,59 @@
+---
+title: Welcome to kicode
+description: AI-powered coding assistant for your terminal
+template: splash
+hero:
+  tagline: An AI coding assistant that runs in your terminal. Built with Rust for speed and reliability.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /getting-started/installation
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/kishanhitk/kicode
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What is kicode?
+
+kicode is an AI-powered coding assistant that runs directly in your terminal. It combines the power of large language models (like Claude, GPT-4, and Grok) with practical file operations and shell command execution.
+
+<CardGrid stagger>
+  <Card title="Multi-Model Support" icon="laptop">
+    Access Claude, GPT-4, Grok, and more through OpenRouter. Switch models with a simple `--model` flag.
+  </Card>
+  <Card title="File Operations" icon="document">
+    Read, write, and edit files with intelligent search-replace. Context-aware modifications across your codebase.
+  </Card>
+  <Card title="Shell Integration" icon="setting">
+    Execute commands with built-in safety analysis. Dangerous operations require your explicit confirmation.
+  </Card>
+  <Card title="Code Search" icon="magnifier">
+    Find anything with regex grep and glob patterns. Search across your entire project in milliseconds.
+  </Card>
+</CardGrid>
+
+## Quick Start
+
+```bash
+# Install kicode
+curl -fsSL https://raw.githubusercontent.com/kishanhitk/kicode/main/install.sh | sh
+
+# Start a session
+kicode
+```
+
+The interactive setup wizard will guide you through configuring your OpenRouter API key on first run.
+
+## Why kicode?
+
+- **Fast**: Built with Rust for native performance
+- **Secure**: Dangerous commands require confirmation
+- **Flexible**: Works with multiple AI models
+- **Simple**: One-command installation
+
+Ready to get started? Head over to the [Installation Guide](/getting-started/installation).

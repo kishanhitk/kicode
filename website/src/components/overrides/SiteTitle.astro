@@ -1,0 +1,39 @@
+---
+// Custom site title component to match marketing page logo
+// Overrides Starlight's default SiteTitle component
+---
+
+<a href="/" class="site-title-link">
+  <span class="site-title-logo">
+    <span class="logo-prompt">&gt;</span>kicode<span class="logo-cursor">_</span>
+  </span>
+</a>
+
+<style>
+  .site-title-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    gap: 0.5rem;
+  }
+
+  .site-title-logo {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #e6edf3;
+    letter-spacing: -0.025em;
+  }
+
+  .logo-prompt {
+    color: #7ee787;
+  }
+
+  .logo-cursor {
+    color: #58a6ff;
+  }
+
+  .site-title-link:hover .site-title-logo {
+    opacity: 0.8;
+  }
+</style>

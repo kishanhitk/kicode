@@ -1,0 +1,189 @@
+---
+import Hero from '../components/Hero.astro';
+import TerminalDemo from '../components/TerminalDemo.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import InstallCommand from '../components/InstallCommand.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+const features = [
+  {
+    icon: 'models',
+    title: 'Multi-Model Support',
+    description: 'Access Claude, GPT-4, Grok, and more through OpenRouter. Switch models on the fly with a simple flag.',
+  },
+  {
+    icon: 'files',
+    title: 'Smart File Operations',
+    description: 'Read, write, and edit files with intelligent search-replace. Never lose context across your codebase.',
+  },
+  {
+    icon: 'shell',
+    title: 'Safe Shell Commands',
+    description: 'Execute commands with built-in safety analysis. Dangerous operations require explicit confirmation.',
+  },
+  {
+    icon: 'search',
+    title: 'Powerful Code Search',
+    description: 'Find anything with regex grep and glob patterns. Search across your entire project in milliseconds.',
+  },
+  {
+    icon: 'stream',
+    title: 'Streaming Responses',
+    description: 'Watch AI think in real-time with streaming output. No waiting for complete responses.',
+  },
+  {
+    icon: 'setup',
+    title: 'One-Command Setup',
+    description: 'Install in seconds with our install script. Interactive setup wizard configures everything.',
+  },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="kicode - AI-powered coding assistant for your terminal. Built with Rust for speed and reliability." />
+    <meta name="keywords" content="AI, coding assistant, terminal, CLI, Rust, developer tools" />
+
+    <meta property="og:title" content="kicode - AI-Powered Coding Assistant" />
+    <meta property="og:description" content="An AI coding assistant that runs in your terminal. Built with Rust for speed and reliability." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="kicode - AI-Powered Coding Assistant" />
+    <meta name="twitter:description" content="An AI coding assistant that runs in your terminal." />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <title>kicode - AI-Powered Coding Assistant for Your Terminal</title>
+
+    <style is:global>
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background-color: #0d1117;
+        color: #e6edf3;
+      }
+    </style>
+  </head>
+
+  <body class="bg-bg-primary text-text-primary min-h-screen">
+    <!-- Hero Section -->
+    <Hero>
+      <TerminalDemo slot="terminal-demo" />
+      <InstallCommand slot="install-command" />
+    </Hero>
+
+    <!-- Features Section -->
+    <section class="py-24 px-4 bg-bg-surface border-y border-border-default">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            Everything You Need to Code with AI
+          </h2>
+          <p class="text-text-secondary max-w-2xl mx-auto">
+            Built for developers who live in the terminal. Fast, secure, and powered by the best AI models.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature) => (
+            <FeatureCard {...feature} />
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-24 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            How It Works
+          </h2>
+          <p class="text-text-secondary">
+            Three steps to supercharge your development workflow
+          </p>
+        </div>
+
+        <div class="space-y-12">
+          <!-- Step 1 -->
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center font-mono font-bold">
+              1
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold text-text-primary mb-2">Install kicode</h3>
+              <p class="text-text-secondary mb-3">Run the install script or use Cargo. The setup wizard will help you configure your API key.</p>
+              <code class="inline-block bg-bg-surface px-3 py-1 rounded text-sm font-mono text-accent-green">
+                curl -fsSL https://...install.sh | sh
+              </code>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center font-mono font-bold">
+              2
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold text-text-primary mb-2">Start a session</h3>
+              <p class="text-text-secondary mb-3">Launch kicode in your project directory. It understands your codebase context automatically.</p>
+              <code class="inline-block bg-bg-surface px-3 py-1 rounded text-sm font-mono text-accent-green">
+                cd my-project && kicode
+              </code>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center font-mono font-bold">
+              3
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold text-text-primary mb-2">Code with AI</h3>
+              <p class="text-text-secondary">Describe what you want to build or fix. kicode reads, writes, and executes code on your behalf.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 px-4 bg-gradient-to-b from-bg-surface to-bg-primary">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+          Ready to Code Smarter?
+        </h2>
+        <p class="text-text-secondary mb-8">
+          Join developers who are shipping faster with AI assistance.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="/getting-started/installation"
+            class="inline-flex items-center justify-center px-8 py-3 bg-accent-blue hover:bg-accent-blue/90 text-bg-primary font-semibold rounded-lg transition-colors"
+          >
+            Get Started
+          </a>
+          <a
+            href="/tools"
+            class="inline-flex items-center justify-center px-8 py-3 border border-border-default hover:border-text-secondary text-text-primary font-semibold rounded-lg transition-colors"
+          >
+            Explore Tools
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <Footer />
+  </body>
+</html>

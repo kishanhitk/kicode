@@ -1,0 +1,240 @@
+---
+title: shell
+description: Execute shell commands with built-in safety analysis
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The `shell` tool executes commands in your system shell. It includes safety analysis to protect against dangerous operations.
+
+## Description
+
+Execute a shell command and return its output. Use this for running programs, git commands, build tools, and more. Dangerous commands require user confirmation before execution.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `command` | string | Yes | The shell command to execute |
+| `working_dir` | string | No | Working directory for the command |
+
+## Examples
+
+### Basic Command Execution
+
+```
+you: Check the git status
+
+ai: I'll check the current git status.
+
+[tool: shell]
+  command: "git status"
+
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+```
+
+### Build Commands
+
+```
+you: Build the project in release mode
+
+ai: I'll compile the project with optimizations.
+
+[tool: shell]
+  command: "cargo build --release"
+
+   Compiling kicode v0.1.0 (/home/user/kicode)
+    Finished release [optimized] target(s) in 12.34s
+```
+
+### With Working Directory
+
+```
+you: Run npm install in the frontend folder
+
+ai: I'll install dependencies in the frontend directory.
+
+[tool: shell]
+  command: "npm install"
+  working_dir: "frontend"
+
+added 342 packages in 8.2s
+```
+
+## Safety Analysis
+
+<Aside type="caution" title="Dangerous Command Detection">
+kicode analyzes commands before execution and flags potentially dangerous operations.
+</Aside>
+
+When a dangerous command is detected:
+
+```
+you: Force push to origin
+
+ai: I'll push the changes.
+
+[tool: shell]
+  command: "git push --force origin main"
+
+⚠️ This command may be dangerous:
+  - Pattern matched: git push --force
+
+Do you want to proceed? [y/N]
+```
+
+### Dangerous Patterns
+
+Commands are flagged if they match any of these categories:
+
+| Category | Examples |
+|----------|----------|
+| Destructive file ops | `rm -rf`, `shred`, `unlink` |
+| Privilege escalation | `sudo`, `su`, `doas` |
+| Git destructive | `git push --force`, `git reset --hard` |
+| System operations | `mkfs`, `dd`, `fdisk` |
+| Remote code execution | `curl ... \| bash` |
+| Package installation | `apt install`, `npm install -g` |
+| Process killing | `kill -9`, `killall` |
+
+See [Safety Reference](/reference/safety) for the complete list.
+
+## Output Handling
+
+### Standard Output
+
+Normal command output is returned directly:
+
+```
+[tool: shell]
+  command: "echo Hello"
+
+Hello
+```
+
+### Standard Error
+
+If there's stderr output, it's shown separately:
+
+```
+[tool: shell]
+  command: "rustc invalid.rs"
+
+error: expected item, found keyword `let`
+ --> invalid.rs:1:1
+  |
+1 | let x = 5;
+  | ^^^ expected item
+
+--- stderr ---
+error: aborting due to previous error
+```
+
+### Exit Codes
+
+Non-zero exit codes are reported:
+
+```
+[tool: shell]
+  command: "false"
+
+Command exited with code 1
+(no output)
+```
+
+### Long Output
+
+Output over 10,000 characters is truncated:
+
+```
+[tool: shell]
+  command: "find /"
+
+/usr
+/usr/bin
+/usr/lib
+... (output truncated)
+```
+
+## Cross-Platform Behavior
+
+| Platform | Shell Used | Shell Argument |
+|----------|-----------|----------------|
+| macOS/Linux | `sh` | `-c` |
+| Windows | `cmd` | `/C` |
+
+## Use Cases
+
+### Development Workflow
+
+```
+# Run tests
+shell: "cargo test"
+
+# Format code
+shell: "cargo fmt"
+
+# Check lints
+shell: "cargo clippy"
+```
+
+### Git Operations
+
+```
+# Stage changes
+shell: "git add src/main.rs"
+
+# Commit
+shell: "git commit -m 'Add feature'"
+
+# View log
+shell: "git log --oneline -10"
+```
+
+### Project Management
+
+```
+# Install dependencies
+shell: "npm install"
+
+# Start dev server
+shell: "npm run dev"
+
+# Build for production
+shell: "npm run build"
+```
+
+## Best Practices
+
+1. **Let the AI choose commands**
+   - Describe what you want, not how
+   - "Run the tests" vs "execute `cargo test`"
+
+2. **Review dangerous commands**
+   - Read the confirmation prompt carefully
+   - Verify the command is what you intended
+
+3. **Use working_dir for clarity**
+   - Specify the directory explicitly
+   - Avoids confusion about current location
+
+4. **Handle output appropriately**
+   - Long outputs are truncated
+   - Ask for specific output if needed
+
+## Error Handling
+
+| Error | Cause |
+|-------|-------|
+| `Failed to execute command: ...` | Command not found or permission issue |
+| `Command exited with code N` | Non-zero exit status |
+| Output truncated | More than 10,000 characters |
+
+## Related Tools
+
+- [grep](/tools/grep) - Search files without shell
+- [glob_search](/tools/glob-search) - Find files without shell
+- [read_file](/tools/read-file) - Read files directly

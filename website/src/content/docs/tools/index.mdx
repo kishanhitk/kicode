@@ -1,0 +1,106 @@
+---
+title: Tools Overview
+description: Overview of all tools available in kicode
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+kicode provides the AI with a set of tools to interact with your filesystem and execute commands. These tools enable the AI to read code, make edits, search your codebase, and run programs.
+
+## Available Tools
+
+<CardGrid>
+  <LinkCard
+    title="read_file"
+    description="Read file contents with optional line range"
+    href="/tools/read-file"
+  />
+  <LinkCard
+    title="write_file"
+    description="Create or overwrite files"
+    href="/tools/write-file"
+  />
+  <LinkCard
+    title="edit_file"
+    description="Search-replace editing"
+    href="/tools/edit-file"
+  />
+  <LinkCard
+    title="shell"
+    description="Execute shell commands"
+    href="/tools/shell"
+  />
+  <LinkCard
+    title="grep"
+    description="Search with regex patterns"
+    href="/tools/grep"
+  />
+  <LinkCard
+    title="glob_search"
+    description="Find files by pattern"
+    href="/tools/glob-search"
+  />
+</CardGrid>
+
+## How Tools Work
+
+When you make a request, the AI decides which tools to use:
+
+```
+you: Show me the main function
+
+ai: I'll read the main.rs file.
+
+[tool: read_file]
+  path: "src/main.rs"
+
+   1 | fn main() {
+   2 |     let config = Config::load()?;
+   3 |     run(config)
+   4 | }
+```
+
+The tool invocation is displayed so you can see exactly what the AI is doing.
+
+## Tool Categories
+
+### File Operations
+
+| Tool | Purpose |
+|------|---------|
+| `read_file` | Read file contents |
+| `write_file` | Create or overwrite files |
+| `edit_file` | Make targeted edits |
+
+### Search Operations
+
+| Tool | Purpose |
+|------|---------|
+| `grep` | Search file contents with regex |
+| `glob_search` | Find files by name pattern |
+
+### Command Execution
+
+| Tool | Purpose |
+|------|---------|
+| `shell` | Run any shell command |
+
+## Safety Considerations
+
+All tools operate within your current directory. The `shell` tool includes safety analysis that flags dangerous commands like:
+
+- Destructive file operations (`rm -rf`)
+- Privilege escalation (`sudo`)
+- Force operations (`git push --force`)
+- Package installation (`npm install -g`)
+
+See [Safety Reference](/reference/safety) for the complete list.
+
+## Tool Output
+
+Tools return structured output to the AI:
+
+- **Success**: Output shown with green indicator
+- **Error**: Error message with red indicator
+
+The AI uses this feedback to adjust its approach if something fails.
