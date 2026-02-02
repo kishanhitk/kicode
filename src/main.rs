@@ -103,3 +103,87 @@ async fn main() -> Result<()> {
 
     repl.run().await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::{Path, PathBuf};
+    use std::sync::{Mutex, OnceLock};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn dir_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    struct TempDir {
+        path: PathBuf,
+    }
+
+    impl TempDir {
+        fn new(test_name: &str) -> Self {
+            let mut path = std::env::temp_dir();
+            let nanos = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            path.push(format!("kicode_{test_name}_{nanos}"));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    struct DirGuard {
+        original: PathBuf,
+    }
+
+    impl DirGuard {
+        fn new(path: &Path) -> Self {
+            let original = std::env::current_dir().unwrap();
+            std::env::set_current_dir(path).unwrap();
+            Self { original }
+        }
+    }
+
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = std::env::set_current_dir(&self.original);
+        }
+    }
+
+    #[test]
+    fn load_agents_instructions_prefers_agents_md() {
+        let _lock = dir_lock().lock().unwrap();
+        let temp = TempDir::new("prefer");
+        std::fs::write(temp.path.join("Agents.md"), "lower").unwrap();
+        std::fs::write(temp.path.join("AGENTS.md"), "upper").unwrap();
+        let _guard = DirGuard::new(&temp.path);
+
+        let loaded = load_agents_instructions();
+
+        assert_eq!(loaded, Some("lower".to_string()));
+    }
+
+    #[test]
+    fn build_system_prompt_appends_trimmed_parent_instructions() {
+        let _lock = dir_lock().lock().unwrap();
+        let temp = TempDir::new("append");
+        let child = temp.path.join("child");
+        std::fs::create_dir_all(&child).unwrap();
+        std::fs::write(temp.path.join("AGENTS.md"), "parent instructions\n\n").unwrap();
+        let _guard = DirGuard::new(&child);
+
+        let prompt = build_system_prompt();
+
+        assert_eq!(
+            prompt,
+            format!("{SYSTEM_PROMPT}\n\nparent instructions")
+        );
+    }
+}
