@@ -5,6 +5,8 @@ use kicode::config::Config;
 use kicode::error::KicodeError;
 use kicode::repl::Repl;
 use kicode::setup::{run_first_run_setup, run_setup_command};
+use kicode::update::{state as update_state, UpdateChecker, UpdateInfo};
+use tokio::sync::oneshot;
 
 #[derive(Parser)]
 #[command(name = "kicode")]
@@ -71,8 +73,28 @@ async fn main() -> Result<()> {
         }
     };
 
+    // Spawn background update check if enabled and due
+    let update_rx: Option<oneshot::Receiver<Option<UpdateInfo>>> =
+        if config.release.check_updates && update_state::should_check() {
+            let (tx, rx) = oneshot::channel();
+            let channel = config.release.channel;
+            tokio::spawn(async move {
+                let result = UpdateChecker::new().check(channel).await.ok().flatten();
+                update_state::record_check();
+                let _ = tx.send(result);
+            });
+            Some(rx)
+        } else {
+            None
+        };
+
     let client = OpenRouterClient::new(&config);
-    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string());
+    let mut repl = Repl::new(
+        client,
+        SYSTEM_PROMPT.to_string(),
+        config.release.channel,
+        update_rx,
+    );
 
     repl.run().await
 }

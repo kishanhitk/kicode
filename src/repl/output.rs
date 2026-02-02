@@ -75,6 +75,7 @@ pub fn print_help() {
   {}       - Show command menu (arrow-key navigation)
   {}    - Show this help
   {}   - Change AI model
+  {}  - Check for updates
   {}   - Clear conversation history
   {}    - Exit the program
 
@@ -88,6 +89,7 @@ pub fn print_help() {
         "/".green(),
         "/help".green(),
         "/model".green(),
+        "/update".green(),
         "/clear".green(),
         "/exit".green(),
         "Usage:".yellow()
@@ -100,4 +102,15 @@ pub fn print_welcome() {
         "Welcome to Kicode!".cyan().bold(),
         "Type /help for commands, or start chatting.".dimmed()
     );
+}
+
+pub fn print_update_available(current: &str, latest: &str) {
+    println!(
+        "{} {} {} {}",
+        "Update:".yellow(),
+        format!("v{}", latest).green().bold(),
+        "available".dimmed(),
+        format!("(current: v{}, run /update for details)", current).dimmed()
+    );
+    println!();
 }

@@ -4,6 +4,40 @@ use std::path::PathBuf;
 
 const DEFAULT_MODEL: &str = "x-ai/grok-code-fast-1";
 
+/// Application version from Cargo.toml
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Release channel for update checking
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ReleaseChannel {
+    #[default]
+    Stable,
+    Beta,
+}
+
+impl std::fmt::Display for ReleaseChannel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReleaseChannel::Stable => write!(f, "stable"),
+            ReleaseChannel::Beta => write!(f, "beta"),
+        }
+    }
+}
+
+fn default_true() -> bool {
+    true
+}
+
+/// Configuration for release/update behavior
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ReleaseConfig {
+    #[serde(default)]
+    pub channel: ReleaseChannel,
+    #[serde(default = "default_true")]
+    pub check_updates: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SafetyConfig {
     #[serde(default)]
@@ -18,6 +52,8 @@ pub struct FileConfig {
     pub model: Option<String>,
     #[serde(default)]
     pub safety: SafetyConfig,
+    #[serde(default)]
+    pub release: ReleaseConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -25,6 +61,7 @@ pub struct Config {
     pub api_key: String,
     pub model: String,
     pub safety: SafetyConfig,
+    pub release: ReleaseConfig,
 }
 
 impl Config {
@@ -49,6 +86,7 @@ impl Config {
             api_key,
             model,
             safety: file_config.safety,
+            release: file_config.release,
         })
     }
 

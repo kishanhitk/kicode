@@ -33,6 +33,7 @@ pub async fn run_first_run_setup() -> Result<Config> {
             Some(model.clone())
         },
         safety: existing_file_config.safety.clone(),
+        release: existing_file_config.release.clone(),
     };
 
     file_config.save()?;
@@ -50,6 +51,7 @@ pub async fn run_first_run_setup() -> Result<Config> {
         api_key,
         model,
         safety: file_config.safety,
+        release: file_config.release,
     })
 }
 
@@ -90,8 +92,12 @@ pub async fn run_setup_command() -> Result<()> {
     let current_model = existing.as_ref().and_then(|c| c.model.as_deref());
     let model = prompt_model(current_model).await?;
 
-    // Save configuration, preserving existing settings like safety config
-    let existing_safety = existing.map(|c| c.safety).unwrap_or_default();
+    // Save configuration, preserving existing settings like safety config and release config
+    let existing_safety = existing
+        .as_ref()
+        .map(|c| c.safety.clone())
+        .unwrap_or_default();
+    let existing_release = existing.map(|c| c.release).unwrap_or_default();
     let file_config = FileConfig {
         api_key: Some(api_key),
         model: if model == Config::default_model() {
@@ -100,6 +106,7 @@ pub async fn run_setup_command() -> Result<()> {
             Some(model)
         },
         safety: existing_safety,
+        release: existing_release,
     };
 
     file_config.save()?;
