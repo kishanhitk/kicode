@@ -45,6 +45,33 @@ Guidelines:
 
 Remember: You're running in the user's terminal with real file access. Be careful with destructive operations."#;
 
+fn build_system_prompt() -> String {
+    let mut prompt = SYSTEM_PROMPT.to_string();
+    if let Some(instructions) = load_agents_instructions() {
+        let instructions = instructions.trim_end();
+        if !instructions.is_empty() {
+            prompt.push_str("\n\n");
+            prompt.push_str(instructions);
+        }
+    }
+    prompt
+}
+
+fn load_agents_instructions() -> Option<String> {
+    let current_dir = std::env::current_dir().ok()?;
+    for dir in current_dir.ancestors() {
+        for name in ["Agents.md", "AGENTS.md"] {
+            let path = dir.join(name);
+            if let Ok(contents) = std::fs::read_to_string(&path) {
+                if !contents.trim().is_empty() {
+                    return Some(contents);
+                }
+            }
+        }
+    }
+    None
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
@@ -72,7 +99,91 @@ async fn main() -> Result<()> {
     };
 
     let client = OpenRouterClient::new(&config);
-    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string());
+    let mut repl = Repl::new(client, build_system_prompt());
 
     repl.run().await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::{Path, PathBuf};
+    use std::sync::{Mutex, OnceLock};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn dir_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    struct TempDir {
+        path: PathBuf,
+    }
+
+    impl TempDir {
+        fn new(test_name: &str) -> Self {
+            let mut path = std::env::temp_dir();
+            let nanos = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            path.push(format!("kicode_{test_name}_{nanos}"));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    struct DirGuard {
+        original: PathBuf,
+    }
+
+    impl DirGuard {
+        fn new(path: &Path) -> Self {
+            let original = std::env::current_dir().unwrap();
+            std::env::set_current_dir(path).unwrap();
+            Self { original }
+        }
+    }
+
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = std::env::set_current_dir(&self.original);
+        }
+    }
+
+    #[test]
+    fn load_agents_instructions_prefers_agents_md() {
+        let _lock = dir_lock().lock().unwrap();
+        let temp = TempDir::new("prefer");
+        std::fs::write(temp.path.join("Agents.md"), "lower").unwrap();
+        std::fs::write(temp.path.join("AGENTS.md"), "upper").unwrap();
+        let _guard = DirGuard::new(&temp.path);
+
+        let loaded = load_agents_instructions();
+
+        assert_eq!(loaded, Some("lower".to_string()));
+    }
+
+    #[test]
+    fn build_system_prompt_appends_trimmed_parent_instructions() {
+        let _lock = dir_lock().lock().unwrap();
+        let temp = TempDir::new("append");
+        let child = temp.path.join("child");
+        std::fs::create_dir_all(&child).unwrap();
+        std::fs::write(temp.path.join("AGENTS.md"), "parent instructions\n\n").unwrap();
+        let _guard = DirGuard::new(&child);
+
+        let prompt = build_system_prompt();
+
+        assert_eq!(
+            prompt,
+            format!("{SYSTEM_PROMPT}\n\nparent instructions")
+        );
+    }
 }
