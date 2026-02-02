@@ -1,3 +1,4 @@
 pub mod checker;
+pub mod state;
 
-pub use checker::UpdateChecker;
+pub use checker::{UpdateChecker, UpdateInfo};

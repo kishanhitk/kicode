@@ -7,12 +7,14 @@ use crate::config::ReleaseChannel;
 use crate::conversation::Conversation;
 use crate::safety::analyzer::SafetyAnalyzer;
 use crate::tools::ToolRegistry;
+use crate::update::UpdateInfo;
 use anyhow::Result;
 use colored::Colorize;
 use crossterm::cursor;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::terminal::{self, Clear, ClearType};
 use std::io::{self, BufRead, Write};
+use tokio::sync::oneshot;
 
 /// Result of reading user input
 enum InputResult {
@@ -248,6 +250,7 @@ pub struct Repl {
     tools: ToolRegistry,
     safety: SafetyAnalyzer,
     release_channel: ReleaseChannel,
+    update_rx: Option<oneshot::Receiver<Option<UpdateInfo>>>,
 }
 
 impl Repl {
@@ -255,6 +258,7 @@ impl Repl {
         client: OpenRouterClient,
         system_prompt: String,
         release_channel: ReleaseChannel,
+        update_rx: Option<oneshot::Receiver<Option<UpdateInfo>>>,
     ) -> Self {
         Self {
             client,
@@ -262,11 +266,13 @@ impl Repl {
             tools: ToolRegistry::new(),
             safety: SafetyAnalyzer::new(),
             release_channel,
+            update_rx,
         }
     }
 
     pub async fn run(&mut self) -> Result<()> {
         output::print_welcome();
+        self.check_background_update();
 
         loop {
             let prompt = output::print_prompt();
@@ -507,6 +513,26 @@ impl Repl {
             }
             commands::model::ModelSelection::Error(e) => {
                 output::print_error(&e);
+            }
+        }
+    }
+
+    /// Check if a background update check has completed and display notification
+    fn check_background_update(&mut self) {
+        if let Some(mut rx) = self.update_rx.take() {
+            // Use try_recv to check without blocking
+            match rx.try_recv() {
+                Ok(Some(info)) => {
+                    if info.has_update() {
+                        output::print_update_available(&info.current_version, &info.latest_version);
+                    }
+                }
+                Ok(None) => {
+                    // No update available - do nothing
+                }
+                Err(_) => {
+                    // Channel closed or not ready yet - silent failure
+                }
             }
         }
     }

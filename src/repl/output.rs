@@ -103,3 +103,14 @@ pub fn print_welcome() {
         "Type /help for commands, or start chatting.".dimmed()
     );
 }
+
+pub fn print_update_available(current: &str, latest: &str) {
+    println!(
+        "{} {} {} {}",
+        "Update:".yellow(),
+        format!("v{}", latest).green().bold(),
+        "available".dimmed(),
+        format!("(current: v{}, run /update for details)", current).dimmed()
+    );
+    println!();
+}
