@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use glob::glob;
 use kicode::api::client::OpenRouterClient;
 use kicode::config::Config;
 use kicode::error::KicodeError;
@@ -45,6 +46,100 @@ Guidelines:
 
 Remember: You're running in the user's terminal with real file access. Be careful with destructive operations."#;
 
+fn find_skills_file() -> Option<std::path::PathBuf> {
+    let mut dir = std::env::current_dir().ok()?;
+    loop {
+        let candidate = dir.join(".agents").join("skill");
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+        if !dir.pop() {
+            break;
+        }
+    }
+    None
+}
+
+fn find_skill_markdown_files() -> Vec<std::path::PathBuf> {
+    let mut matches = Vec::new();
+
+    if let Some(home) = dirs::home_dir() {
+        add_skill_markdown_files(&mut matches, &home.join(".agents"));
+    }
+
+    let Ok(mut dir) = std::env::current_dir() else {
+        return matches;
+    };
+    loop {
+        add_skill_markdown_files(&mut matches, &dir.join(".agents"));
+        if !dir.pop() {
+            break;
+        }
+    }
+
+    matches
+}
+
+fn add_skill_markdown_files(
+    matches: &mut Vec<std::path::PathBuf>,
+    agents_dir: &std::path::Path,
+) {
+    if !agents_dir.is_dir() {
+        return;
+    }
+
+    let pattern = agents_dir.join("skills").join("**").join("SKILL.md");
+    let pattern_str = pattern.to_string_lossy();
+    let entries = match glob(&pattern_str) {
+        Ok(entries) => entries,
+        Err(_) => return,
+    };
+
+    for entry in entries {
+        if let Ok(path) = entry {
+            if path.is_file() {
+                matches.push(path);
+            }
+        }
+    }
+}
+
+fn load_skills() -> Result<Option<String>> {
+    let mut skill_paths = Vec::new();
+    if let Some(path) = find_skills_file() {
+        skill_paths.push(path);
+    }
+    skill_paths.extend(find_skill_markdown_files());
+
+    if skill_paths.is_empty() {
+        return Ok(None);
+    }
+
+    let mut sections = Vec::new();
+    for path in skill_paths {
+        if let Ok(content) = std::fs::read_to_string(path) {
+            if !content.trim().is_empty() {
+                sections.push(content.trim_end().to_string());
+            }
+        }
+    }
+
+    if sections.is_empty() {
+        return Ok(None);
+    }
+
+    Ok(Some(sections.join("\n\n")))
+}
+
+fn build_system_prompt() -> Result<String> {
+    let mut prompt = SYSTEM_PROMPT.to_string();
+    if let Some(skills) = load_skills()? {
+        prompt.push_str("\n\nSkills:\n");
+        prompt.push_str(&skills);
+    }
+    Ok(prompt)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
@@ -72,7 +167,8 @@ async fn main() -> Result<()> {
     };
 
     let client = OpenRouterClient::new(&config);
-    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string());
+    let system_prompt = build_system_prompt()?;
+    let mut repl = Repl::new(client, system_prompt);
 
     repl.run().await
 }
