@@ -45,6 +45,40 @@ Guidelines:
 
 Remember: You're running in the user's terminal with real file access. Be careful with destructive operations."#;
 
+fn find_skills_file() -> Option<std::path::PathBuf> {
+    let mut dir = std::env::current_dir().ok()?;
+    loop {
+        let candidate = dir.join(".agents").join("skill");
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+        if !dir.pop() {
+            break;
+        }
+    }
+    None
+}
+
+fn load_skills() -> Result<Option<String>> {
+    let Some(path) = find_skills_file() else {
+        return Ok(None);
+    };
+    let content = std::fs::read_to_string(path)?;
+    if content.trim().is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(content.trim_end().to_string()))
+}
+
+fn build_system_prompt() -> Result<String> {
+    let mut prompt = SYSTEM_PROMPT.to_string();
+    if let Some(skills) = load_skills()? {
+        prompt.push_str("\n\nSkills:\n");
+        prompt.push_str(&skills);
+    }
+    Ok(prompt)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
@@ -72,7 +106,8 @@ async fn main() -> Result<()> {
     };
 
     let client = OpenRouterClient::new(&config);
-    let mut repl = Repl::new(client, SYSTEM_PROMPT.to_string());
+    let system_prompt = build_system_prompt()?;
+    let mut repl = Repl::new(client, system_prompt);
 
     repl.run().await
 }
